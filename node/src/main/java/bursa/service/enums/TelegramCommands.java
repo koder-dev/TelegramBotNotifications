@@ -12,6 +12,15 @@ public enum TelegramCommands {
         this.command = command;
     }
 
+    public static TelegramCommands fromValue(String text) {
+        for (TelegramCommands command : TelegramCommands.values()) {
+            if (command.toString().equalsIgnoreCase(text)) {
+                return command;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return command;

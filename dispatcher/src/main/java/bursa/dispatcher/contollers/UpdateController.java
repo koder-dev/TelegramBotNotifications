@@ -37,7 +37,12 @@ public class UpdateController {
         if (message.hasText()) processTextMessage(update);
         else if (message.hasAudio()) processAudioMessage(update);
         else if (message.hasDocument()) processDocumentMessage(update);
+        else if (message.hasVideo()) processVideoMessage(update);
         else setUnsupportedMessageTypeView(update);
+    }
+
+    private void processVideoMessage(Update update) {
+        updateProducer.produce(VIDEO_MESSAGE_UPDATE, update);
     }
 
     private void setUnsupportedMessageTypeView(Update update) {

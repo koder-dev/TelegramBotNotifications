@@ -31,17 +31,20 @@ public class ConsumerServiceImpl implements ConsumerService {
     @RabbitListener(queues = VIDEO_MESSAGE_UPDATE)
     public void consumerVideoMessageUpdates(Update update) {
         log.debug("NODE: video message is received");
+        mainService.processVideoMessage(update);
     }
 
     @Override
     @RabbitListener(queues = AUDIO_MESSAGE_UPDATE)
     public void consumerAudioMessageUpdates(Update update) {
         log.debug("NODE: audio message is received");
+        mainService.processAudioMessage(update);
     }
 
     @Override
     @RabbitListener(queues = DOC_MESSAGE_UPDATE)
     public void consumerDocMessageUpdates(Update update) {
         log.debug("NODE: doc message is received");
+        mainService.processDocMessage(update);
     }
 }
