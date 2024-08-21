@@ -21,3 +21,8 @@
 2024-08-21 04:40:51,863 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] /start
 2024-08-21 04:42:31,749 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
 2024-08-21 04:42:48,310 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
+2024-08-21 16:59:27,143 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
+2024-08-21 17:02:56,575 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
+2024-08-21 17:03:18,916 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
+2024-08-21 23:58:38,789 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 
+2024-08-22 00:00:40,191 DEBUG bursa.dispatcher.service.impl.UpdateProducerImpl [pool-3-thread-1] 

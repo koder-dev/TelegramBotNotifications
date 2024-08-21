@@ -50,6 +50,11 @@
         </dependency>
         <dependency>
             <groupId>bursa</groupId>
+            <artifactId>common-utils</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>bursa</groupId>
             <artifactId>common_rabbit_mq</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>

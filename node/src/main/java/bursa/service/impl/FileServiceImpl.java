@@ -8,6 +8,8 @@ import bursa.repositories.AppDocumentRepo;
 import bursa.repositories.AppVideoRepo;
 import bursa.repositories.BinaryContentRepo;
 import bursa.service.FileService;
+import bursa.service.enums.LinkType;
+import bursa.utils.CryptoTool;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +35,15 @@ public class FileServiceImpl implements FileService {
 
     @Value("${service.file_storage.uri}")
     private String fileStorageUri;
-    private AppDocumentRepo appDocumentRepo;
-    private AppVideoRepo appVideoRepo;
-    private BinaryContentRepo binaryContentRepo;
+    @Value("${link.address}")
+    private String linkAddress;
+    private final CryptoTool cryptoTool;
+    private final AppDocumentRepo appDocumentRepo;
+    private final AppVideoRepo appVideoRepo;
+    private final BinaryContentRepo binaryContentRepo;
 
-    public FileServiceImpl(AppDocumentRepo appDocumentRepo, AppVideoRepo appVideoRepo, BinaryContentRepo binaryContentRepo) {
+    public FileServiceImpl(CryptoTool cryptoTool, AppDocumentRepo appDocumentRepo, AppVideoRepo appVideoRepo, BinaryContentRepo binaryContentRepo) {
+        this.cryptoTool = cryptoTool;
         this.appDocumentRepo = appDocumentRepo;
         this.appVideoRepo = appVideoRepo;
         this.binaryContentRepo = binaryContentRepo;
@@ -106,7 +112,7 @@ public class FileServiceImpl implements FileService {
     private byte[] downloadFile(String filePath) {
         String fullUri = fileStorageUri.replace("{bot.token}", botToken)
                 .replace("{filePath}", filePath);
-        URL urlObj = null;
+        URL urlObj;
         try {
             urlObj = new URL(fullUri);
         } catch (MalformedURLException e) {
@@ -127,5 +133,11 @@ public class FileServiceImpl implements FileService {
         HttpHeaders headers = new HttpHeaders();
         HttpEntity<String> request = new HttpEntity<>(headers);
         return restTemplate.exchange(fileInfoUri, HttpMethod.GET, request, String.class, botToken, fileId);
+    }
+
+    @Override
+    public String generateLink(Long id, LinkType linkType) {
+        var hash = cryptoTool.hashOf(id);
+        return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
     }
 }

@@ -10,6 +10,7 @@ import bursa.repositories.RawDataRepo;
 import bursa.service.FileService;
 import bursa.service.MainService;
 import bursa.service.ProducerService;
+import bursa.service.enums.LinkType;
 import bursa.service.enums.TelegramCommands;
 import lombok.extern.log4j.Log4j;
 import org.springframework.stereotype.Service;
@@ -130,9 +131,9 @@ public class MainServiceImpl implements MainService {
         }
         try {
             AppDocument appDocument = fileService.processDoc(update.getMessage());
-            var answer = "Document has uploaded.Link for downloading - http:2000";
+            String link = fileService.generateLink(appDocument.getId(), LinkType.GET_DOC);
+            var answer = "Document has uploaded.Link for downloading - " + link;
             sendAnswer(answer, chatId);
-            //TODO реалізуй метод скачування
         } catch (UploadFileException ex) {
             log.error(ex);
             String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
@@ -151,8 +152,8 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppVideo appVideo = fileService.processVideo(update.getMessage());
-            //TODO реалізувати зберігання video
-            var answer = "Video has uploaded.Link for downloading - http:2000";
+            String link = fileService.generateLink(appVideo.getId(), LinkType.GET_VIDEO);
+            var answer = "Video has uploaded.Link for downloading - " + link;
             sendAnswer(answer, chatId);
         } catch (UploadFileException ex) {
             log.error(ex);

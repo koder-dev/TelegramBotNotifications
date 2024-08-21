@@ -29,5 +29,7 @@
     <module>common_rabbit_mq</module>
     <module>node</module>
       <module>common_jpa</module>
+      <module>rest_module</module>
+      <module>common-utils</module>
   </modules>
 </project>

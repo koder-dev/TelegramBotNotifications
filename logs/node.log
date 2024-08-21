@@ -9523,3 +9523,8 @@
 2024-08-21 04:41:41,920 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] NODE: text message is received
 2024-08-21 04:42:31,770 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] NODE: video message is received
 2024-08-21 04:42:48,315 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] NODE: video message is received
+2024-08-21 16:59:27,393 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#2-1] NODE: doc message is received
+2024-08-21 17:02:56,578 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#2-1] NODE: doc message is received
+2024-08-21 17:03:18,919 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#2-1] NODE: doc message is received
+2024-08-21 23:58:39,013 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] NODE: doc message is received
+2024-08-22 00:00:40,408 DEBUG bursa.service.impl.ConsumerServiceImpl [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#3-1] NODE: doc message is received
