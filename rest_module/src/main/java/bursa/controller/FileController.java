@@ -1,6 +1,7 @@
 package bursa.controller;
 
 import bursa.service.FileService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.Objects;
 
 @RestController
@@ -22,36 +24,41 @@ public class FileController {
     }
 
     @GetMapping("/get-doc")
-    public ResponseEntity<?> getDoc(@RequestParam("id") String id) {
+    public void getDoc(@RequestParam("id") String id, HttpServletResponse response) {
         var doc = fileService.getDocument(id);
         if (Objects.isNull(doc)) {
-            return ResponseEntity.notFound().build();
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
+        response.setContentType(MediaType.parseMediaType(doc.getMimeType()).toString());
+        response.setHeader("Content-Disposition", "attachment; filename=" + doc.getDocName());
+        response.setStatus(HttpServletResponse.SC_OK);
         var binaryContent = doc.getBinaryContent();
-        var fileSystemResource = fileService.getFileSystemResource(binaryContent);
-        if (Objects.isNull(fileSystemResource)) {
-            return ResponseEntity.internalServerError().build();
+
+        try (var out = response.getOutputStream();){
+            out.write(binaryContent.getFileAsArrayOfBytes());
+        } catch (IOException e) {
+            log.error(e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(doc.getMimeType()))
-                .header("Content-Disposition", "attachment; filename=" + doc.getDocName())
-                .body(fileSystemResource);
     }
 
     @GetMapping("/get-video")
-    public ResponseEntity<?> getVideo(@RequestParam("id") String id) {
+    public void getVideo(@RequestParam("id") String id, HttpServletResponse response) {
         var video = fileService.getVideo(id);
         if (Objects.isNull(video)) {
-            return ResponseEntity.badRequest().build();
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
+        response.setContentType(MediaType.parseMediaType(video.getMimeType()).toString());
+        response.setHeader("Content-Disposition", "attachment;");
         var binaryContent = video.getBinaryContent();
-        var fileSystemResource = fileService.getFileSystemResource(binaryContent);
-        if (Objects.isNull(fileSystemResource)) {
-            return ResponseEntity.internalServerError().build();
+        response.setStatus(HttpServletResponse.SC_OK);
+        try (var out = response.getOutputStream();){
+            out.write(binaryContent.getFileAsArrayOfBytes());
+        } catch (IOException e) {
+            log.error(e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(video.getMimeType()))
-                .header("Content-Disposition", "attachment;")
-                .body(fileSystemResource);
     }
 }

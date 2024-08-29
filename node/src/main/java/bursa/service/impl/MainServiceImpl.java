@@ -7,9 +7,7 @@ import bursa.entity.RawData;
 import bursa.exceptions.UploadFileException;
 import bursa.repositories.AppUserRepo;
 import bursa.repositories.RawDataRepo;
-import bursa.service.FileService;
-import bursa.service.MainService;
-import bursa.service.ProducerService;
+import bursa.service.*;
 import bursa.service.enums.LinkType;
 import bursa.service.enums.TelegramCommands;
 import lombok.extern.log4j.Log4j;
@@ -17,9 +15,12 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import static bursa.enums.UserState.BASIC_STATE;
 import static bursa.enums.UserState.WAIT_FOR_EMAIL;
+import static bursa.model.RabbitQueue.NOTIFICATION_MESSAGE_UPDATE;
 import static bursa.service.enums.TelegramCommands.*;
 
 @Service
@@ -29,24 +30,27 @@ public class MainServiceImpl implements MainService {
     private final ProducerService producerService;
     private final AppUserRepo appUserRepo;
     private final FileService fileService;
+    private final AppUserService appUserService;
+    private final CommandHandlerService commandHandlerService;
 
-    public MainServiceImpl(RawDataRepo rawDataRepo, ProducerService producerService, AppUserRepo appUserRepo, FileService fileService) {
+    public MainServiceImpl(RawDataRepo rawDataRepo, ProducerService producerService, AppUserRepo appUserRepo, FileService fileService, AppUserService appUserService, CommandHandlerService commandHandlerService) {
         this.rawDataRepo = rawDataRepo;
         this.producerService = producerService;
         this.appUserRepo = appUserRepo;
         this.fileService = fileService;
+        this.appUserService = appUserService;
+        this.commandHandlerService = commandHandlerService;
     }
 
     private AppUser findOrSaveAppUser(Update update) {
         User telegramUser = update.getMessage().getFrom();
-        return appUserRepo.findAppUserByTelegramUserId(telegramUser.getId()).orElseGet(() -> {
+        return appUserRepo.findByTelegramUserId(telegramUser.getId()).orElseGet(() -> {
             AppUser appUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())
                     .username(telegramUser.getUserName())
                     .firstName(telegramUser.getFirstName())
                     .lastName(telegramUser.getLastName())
-                    //TODO поміняти значення по замовчуванню після додавання регістрації
-                    .isActive(true)
+                    .isActive(false)
                     .userState(BASIC_STATE)
                     .build();
             return appUserRepo.save(appUser);
@@ -60,38 +64,30 @@ public class MainServiceImpl implements MainService {
         var userState = appUser.getUserState();
         var text = update.getMessage().getText();
         var telegramCommand = TelegramCommands.fromValue(text);
-        var output = "";
+        var chatId = update.getMessage().getChatId();
+        var messageBuilder = SendMessage.builder();
+
 
         if (CANCEL.equals(telegramCommand)) {
-            output = cancelProcess(appUser);
+           messageBuilder.text(cancelProcess(appUser));
+        } else if (NOTIFICATION.equals(telegramCommand)){
+            producerService.produce(NOTIFICATION_MESSAGE_UPDATE, update);
+            return;
         } else if (BASIC_STATE.equals(userState)) {
-            output = processServiceCommand(appUser, text);
+            commandHandlerService.processCommand(appUser, text, messageBuilder);
         } else if (WAIT_FOR_EMAIL.equals(userState)) {
-            //TODO додати оброботку емейл
+            messageBuilder.text(appUserService.setEmail(appUser, text));
         } else {
             log.error("Unknown state: " + userState);
-            output = "Невідома помилка, введіть /cancel та попробуйте пізніше";
+            messageBuilder.text("Невідома помилка, введіть /cancel та попробуйте пізніше");
         }
-        Long chatId = update.getMessage().getChatId();
-        sendAnswer(output, chatId);
+        producerService.producerAnswer(messageBuilder.chatId(chatId).build());
     }
 
-    private void sendAnswer(String output, Long chatId) {
-        SendMessage sendMessage = SendMessage.builder().chatId(chatId).text(output).build();
+
+    private void sendAnswer(String text, Long charId) {
+        var sendMessage = SendMessage.builder().text(text).chatId(charId).build();
         producerService.producerAnswer(sendMessage);
-    }
-
-    private String processServiceCommand(AppUser appUser, String command) {
-        if (REGISTRATION.equals(command)) {
-            //TODO добавити регістрацію
-            return "Поки що недоступно";
-        } else if (HELP.equals(command)) {
-            return help();
-        } else if (START.equals(command)) {
-            return "Добрий день, для отримання списку команд введіть /help";
-        } else {
-            return "Невідома команда,для отримання списку команд введіть /help";
-        }
     }
 
     @Override
@@ -161,11 +157,6 @@ public class MainServiceImpl implements MainService {
         }
     }
 
-    private String help() {
-        return "Cписок доступних команд:\n"
-                + "/cancel - відміна поточної дії"
-                + "/registration - реєстрація в боті";
-    }
 
     private String cancelProcess(AppUser appUser) {
         appUser.setUserState(BASIC_STATE);

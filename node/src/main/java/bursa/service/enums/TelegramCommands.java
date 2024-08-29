@@ -3,6 +3,7 @@ package bursa.service.enums;
 public enum TelegramCommands {
     HELP("/help"),
     REGISTRATION("/registration"),
+    NOTIFICATION("/notification"),
     CANCEL("/cancel"),
     START("/start");
 

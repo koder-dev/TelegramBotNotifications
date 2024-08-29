@@ -38,7 +38,12 @@ public class UpdateController {
         else if (message.hasAudio()) processAudioMessage(update);
         else if (message.hasDocument()) processDocumentMessage(update);
         else if (message.hasVideo()) processVideoMessage(update);
+        else if (update.hasCallbackQuery()) processCallbackQuery(update);
         else setUnsupportedMessageTypeView(update);
+    }
+
+    private void processCallbackQuery(Update update) {
+        updateProducer.produce(CALLBACK_QUERY, update);
     }
 
     private void processVideoMessage(Update update) {

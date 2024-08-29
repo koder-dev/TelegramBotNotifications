@@ -6,4 +6,6 @@ public class RabbitQueue {
     public static final String VIDEO_MESSAGE_UPDATE = "video_message_update";
     public static final String TEXT_MESSAGE_UPDATE = "text_message_update";
     public static final String ANSWER_MESSAGE = "answer_message";
+    public static final String NOTIFICATION_MESSAGE_UPDATE = "notification_message_update";
+    public static final String CALLBACK_QUERY =  "callback_query";
 }

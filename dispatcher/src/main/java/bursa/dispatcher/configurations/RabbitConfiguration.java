@@ -41,4 +41,14 @@ public class RabbitConfiguration {
     public Queue answerMessageQueue() {
         return new Queue(ANSWER_MESSAGE);
     }
+
+    @Bean
+    public Queue notificationMessageQueue() {
+        return new Queue(NOTIFICATION_MESSAGE_UPDATE);
+    }
+
+    @Bean
+    public Queue callbackQueryQueue() {
+        return new Queue(CALLBACK_QUERY);
+    }
 }

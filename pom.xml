@@ -31,5 +31,7 @@
       <module>common_jpa</module>
       <module>rest_module</module>
       <module>common-utils</module>
+    <module>mail_service</module>
+      <module>notifications_service</module>
   </modules>
 </project>

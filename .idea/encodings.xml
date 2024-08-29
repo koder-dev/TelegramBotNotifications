@@ -6,7 +6,9 @@
     <file url="file://$PROJECT_DIR$/common_rabbit_mq/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common_rabbit_mq/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/dispatcher/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mail_service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/node/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/notifications_service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rest_module/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />

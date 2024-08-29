@@ -8,5 +8,4 @@ import org.springframework.core.io.FileSystemResource;
 public interface FileService {
     AppDocument getDocument(String id);
     AppVideo getVideo(String id);
-    FileSystemResource getFileSystemResource(BinaryContent binaryContent);
 }
