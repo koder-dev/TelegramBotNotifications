@@ -8,4 +8,8 @@ public class RabbitQueue {
     public static final String ANSWER_MESSAGE = "answer_message";
     public static final String NOTIFICATION_MESSAGE_UPDATE = "notification_message_update";
     public static final String CALLBACK_QUERY =  "callback_query";
+    public static final String EDIT_MESSAGE = "edit_message";
+    public static final String DELETE_MESSAGE = "delete_message";
+    public static final String NOTIFICATION_EDIT_TEXT_MESSAGE = "notification_edit_text_message";
+    public static final String NOTIFICATION_EDIT_TIME_MESSAGE = "notification_edit_time_message";
 }

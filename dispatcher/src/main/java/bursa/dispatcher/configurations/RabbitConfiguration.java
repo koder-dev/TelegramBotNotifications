@@ -51,4 +51,24 @@ public class RabbitConfiguration {
     public Queue callbackQueryQueue() {
         return new Queue(CALLBACK_QUERY);
     }
+
+    @Bean
+    public Queue editMessageQueue() {
+        return new Queue(EDIT_MESSAGE);
+    }
+
+    @Bean
+    public Queue deleteMessageQueue() {
+        return new Queue(DELETE_MESSAGE);
+    }
+
+    @Bean
+    public Queue notificationEditTextMessageQueue() {
+        return new Queue(NOTIFICATION_EDIT_TEXT_MESSAGE);
+    }
+
+    @Bean
+    public Queue notificationEditTimeMessageQueue() {
+        return new Queue(NOTIFICATION_EDIT_TIME_MESSAGE);
+    }
 }

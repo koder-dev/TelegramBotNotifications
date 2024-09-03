@@ -11,6 +11,8 @@ import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
@@ -42,10 +44,10 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
 
     private void setCommands() {
         List<BotCommand> commands = new ArrayList<>();
-        commands.add(new BotCommand("/start", "Bot is going to initialize"));
-        commands.add(new BotCommand("/menu", "Show menu with main commands"));
+        commands.add(new BotCommand("/start", "Initialize bot"));
+        commands.add(new BotCommand("/cancel", "Cancel command and back to basic state"));
         commands.add(new BotCommand("/register", "Registration in bot via email"));
-        commands.add(new BotCommand("/notification", "Show notification menu"));
+        commands.add(new BotCommand("/notifications", "Show notification menu"));
         try {
             telegramClient.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
@@ -66,6 +68,14 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
 
     public void sendAnswerMessage(SendMessage message) throws TelegramApiException {
         telegramClient.execute(message);
+    }
+
+    public void sendAnswerMessage(EditMessageText editMessageText) throws TelegramApiException {
+        telegramClient.execute(editMessageText);
+    }
+
+    public void sendAnswerMessage(DeleteMessage deleteMessage) throws TelegramApiException {
+        telegramClient.execute(deleteMessage);
     }
 
     @Override

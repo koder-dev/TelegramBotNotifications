@@ -3,10 +3,8 @@ package bursa.service.impl;
 import bursa.entities.AppDocument;
 import bursa.entities.AppUser;
 import bursa.entities.AppVideo;
-import bursa.entity.RawData;
 import bursa.exceptions.UploadFileException;
 import bursa.repositories.AppUserRepo;
-import bursa.repositories.RawDataRepo;
 import bursa.service.*;
 import bursa.service.enums.LinkType;
 import bursa.service.enums.TelegramCommands;
@@ -15,31 +13,66 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
-import static bursa.enums.UserState.BASIC_STATE;
-import static bursa.enums.UserState.WAIT_FOR_EMAIL;
-import static bursa.model.RabbitQueue.NOTIFICATION_MESSAGE_UPDATE;
+
+import static bursa.enums.UserState.*;
+import static bursa.model.RabbitQueue.*;
 import static bursa.service.enums.TelegramCommands.*;
 
 @Service
 @Log4j
 public class MainServiceImpl implements MainService {
-    private final RawDataRepo rawDataRepo;
     private final ProducerService producerService;
     private final AppUserRepo appUserRepo;
     private final FileService fileService;
     private final AppUserService appUserService;
     private final CommandHandlerService commandHandlerService;
 
-    public MainServiceImpl(RawDataRepo rawDataRepo, ProducerService producerService, AppUserRepo appUserRepo, FileService fileService, AppUserService appUserService, CommandHandlerService commandHandlerService) {
-        this.rawDataRepo = rawDataRepo;
+    public MainServiceImpl(ProducerService producerService, AppUserRepo appUserRepo, FileService fileService, AppUserService appUserService, CommandHandlerService commandHandlerService) {
         this.producerService = producerService;
         this.appUserRepo = appUserRepo;
         this.fileService = fileService;
         this.appUserService = appUserService;
         this.commandHandlerService = commandHandlerService;
+    }
+
+    @Override
+    public void processTextMessage(Update update) {
+        var telegramCommand = TelegramCommands.fromValue(update.getMessage().getText());
+        var user = findOrSaveAppUser(update);
+
+        if (CANCEL.equals(telegramCommand)) {
+            sendAnswer(cancelProcess(user), update.getMessage().getChatId());
+        } else {
+            handleUserState(update, user, telegramCommand);
+        }
+    }
+
+    private String cancelProcess(AppUser appUser) {
+        appUser.setUserState(BASIC_STATE);
+        appUserRepo.save(appUser);
+        return "Command canceled";
+    }
+
+    private void handleUserState(Update update, AppUser user, TelegramCommands telegramCommand) {
+        var userState = user.getUserState();
+        var chatId = update.getMessage().getChatId();
+        var text = update.getMessage().getText();
+        String UNKNOWN_USER_STATE = "Internal server error.Unknown user state!Please enter /cancel to return to basic state";
+        if (NOTIFICATIONS_STATE.equals(userState) || NOTIFICATIONS.equals(telegramCommand)) producerService.produce(NOTIFICATION_MESSAGE_UPDATE, update);
+        else if (NOTIFICATION_EDIT_TIME_STATE.equals(userState)) producerService.produce(NOTIFICATION_EDIT_TIME_MESSAGE, update);
+        else if (NOTIFICATION_EDIT_TEXT_STATE.equals(userState)) producerService.produce(NOTIFICATION_EDIT_TEXT_MESSAGE, update);
+        else if (WAIT_FOR_EMAIL.equals(userState)) sendAnswer(appUserService.setEmail(user, text), chatId);
+        else if (BASIC_STATE.equals(userState)) sendAnswer(commandHandlerService.processCommand(user, telegramCommand, chatId));
+        else sendAnswer(UNKNOWN_USER_STATE, chatId);
+    }
+
+    private void sendAnswer(SendMessage message) {
+        producerService.producerAnswer(message);
+    }
+
+    private void sendAnswer(String text, Long charId) {
+        var sendMessage = SendMessage.builder().text(text).chatId(charId).build();
+        producerService.producerAnswer(sendMessage);
     }
 
     private AppUser findOrSaveAppUser(Update update) {
@@ -58,41 +91,7 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
-    public void processTextMessage(Update update) {
-        saveRawData(update);
-        var appUser = findOrSaveAppUser(update);
-        var userState = appUser.getUserState();
-        var text = update.getMessage().getText();
-        var telegramCommand = TelegramCommands.fromValue(text);
-        var chatId = update.getMessage().getChatId();
-        var messageBuilder = SendMessage.builder();
-
-
-        if (CANCEL.equals(telegramCommand)) {
-           messageBuilder.text(cancelProcess(appUser));
-        } else if (NOTIFICATION.equals(telegramCommand)){
-            producerService.produce(NOTIFICATION_MESSAGE_UPDATE, update);
-            return;
-        } else if (BASIC_STATE.equals(userState)) {
-            commandHandlerService.processCommand(appUser, text, messageBuilder);
-        } else if (WAIT_FOR_EMAIL.equals(userState)) {
-            messageBuilder.text(appUserService.setEmail(appUser, text));
-        } else {
-            log.error("Unknown state: " + userState);
-            messageBuilder.text("Невідома помилка, введіть /cancel та попробуйте пізніше");
-        }
-        producerService.producerAnswer(messageBuilder.chatId(chatId).build());
-    }
-
-
-    private void sendAnswer(String text, Long charId) {
-        var sendMessage = SendMessage.builder().text(text).chatId(charId).build();
-        producerService.producerAnswer(sendMessage);
-    }
-
-    @Override
     public void processAudioMessage(Update update) {
-        saveRawData(update);
         var appUser = findOrSaveAppUser(update);
         var chatId = update.getMessage().getChatId();
         if (isNotAllowedToSendContent(chatId, appUser)) {
@@ -103,23 +102,8 @@ public class MainServiceImpl implements MainService {
         sendAnswer(answer, chatId);
     }
 
-    private boolean isNotAllowedToSendContent(Long chatId, AppUser appUser) {
-        var userState = appUser.getUserState();
-        if (!appUser.getIsActive()) {
-            var error = "Зареєструйтеся або активуйте аккаунт";
-            sendAnswer(error, chatId);
-            return true;
-        } else if (!BASIC_STATE.equals(userState)) {
-            var error = "Відмініть команду за допомогою /cancel";
-            sendAnswer(error, chatId);
-            return true;
-        }
-        return false;
-    }
-
     @Override
     public void processDocMessage(Update update) {
-        saveRawData(update);
         var appUser = findOrSaveAppUser(update);
         var chatId = update.getMessage().getChatId();
         if (isNotAllowedToSendContent(chatId, appUser)) {
@@ -139,7 +123,6 @@ public class MainServiceImpl implements MainService {
 
     @Override
     public void processVideoMessage(Update update) {
-        saveRawData(update);
         var appUser = findOrSaveAppUser(update);
         var chatId = update.getMessage().getChatId();
         if (isNotAllowedToSendContent(chatId, appUser)) {
@@ -157,15 +140,19 @@ public class MainServiceImpl implements MainService {
         }
     }
 
-
-    private String cancelProcess(AppUser appUser) {
-        appUser.setUserState(BASIC_STATE);
-        appUserRepo.save(appUser);
-        return "Command canceled";
+    private boolean isNotAllowedToSendContent(Long chatId, AppUser appUser) {
+        var userState = appUser.getUserState();
+        if (!appUser.getIsActive()) {
+            var error = "Зареєструйтеся або активуйте аккаунт";
+            sendAnswer(error, chatId);
+            return true;
+        } else if (!BASIC_STATE.equals(userState)) {
+            var error = "Відмініть команду за допомогою /cancel";
+            sendAnswer(error, chatId);
+            return true;
+        }
+        return false;
     }
 
-    private void saveRawData(Update update) {
-        RawData rawData = RawData.builder().chatId(update.getMessage().getChatId()).text(update.getMessage().getText()).build();
-        rawDataRepo.save(rawData);
-    }
+
 }

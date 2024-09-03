@@ -2,7 +2,13 @@ package bursa.service.enums;
 
 public enum CallbackData {
     CREATE_NEW_NOTIFICATION("create-new-notification"),
-    SHOW_ALL_NOTIFICATIONS("show-all-notifications");
+    SHOW_ALL_NOTIFICATIONS("show-all-notifications"),
+    EDIT_NOTIFICATION("edit-notification"),
+    EDIT_NOTIFICATION_TIME("edit-notification-time"),
+    EDIT_NOTIFICATION_TEXT("edit-notification-text"),
+    DELETE_NOTIFICATION("delete-notification"),
+    BACK_TO_MAIN_MENU("back-to-main-menu"),
+    BACK_TO_NOTIFICATION_MENU("back-to-notification-menu");
 
     private final String value;
 
@@ -10,7 +16,7 @@ public enum CallbackData {
         this.value = callbackData;
     }
 
-    public CallbackData fromValue(String text) {
+    public static CallbackData fromValue(String text) {
         for (CallbackData cd : CallbackData.values()) {
             if (cd.value.equals(text)) {
                 return cd;

@@ -2,5 +2,8 @@ package bursa.enums;
 
 public enum UserState {
     BASIC_STATE,
-    WAIT_FOR_EMAIL
+    WAIT_FOR_EMAIL,
+    NOTIFICATIONS_STATE,
+    NOTIFICATION_EDIT_TEXT_STATE,
+    NOTIFICATION_EDIT_TIME_STATE;
 }

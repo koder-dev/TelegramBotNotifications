@@ -5,6 +5,8 @@ import bursa.dispatcher.utils.MessageUtils;
 import lombok.extern.log4j.Log4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import static bursa.model.RabbitQueue.*;
@@ -28,7 +30,8 @@ public class UpdateController {
 
     public void processUpdate(Update update) {
         if (Objects.isNull(update)) log.debug("Update is null");
-        if (update.hasMessage()) distributeMessageByType(update);
+        else if (update.hasMessage()) distributeMessageByType(update);
+        else if (update.hasCallbackQuery()) processCallbackQuery(update);
         else log.error("Received unsupported update message" + update);
     }
 
@@ -38,7 +41,6 @@ public class UpdateController {
         else if (message.hasAudio()) processAudioMessage(update);
         else if (message.hasDocument()) processDocumentMessage(update);
         else if (message.hasVideo()) processVideoMessage(update);
-        else if (update.hasCallbackQuery()) processCallbackQuery(update);
         else setUnsupportedMessageTypeView(update);
     }
 
@@ -58,6 +60,21 @@ public class UpdateController {
     public void setView(SendMessage sendMessage) {
         try {
             telegramBot.sendAnswerMessage(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void setView(EditMessageText editMessageText) {
+        try {
+            telegramBot.sendAnswerMessage(editMessageText);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setView(DeleteMessage deleteMessage) {
+        try {
+            telegramBot.sendAnswerMessage(deleteMessage);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
