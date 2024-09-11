@@ -1,8 +1,8 @@
 package bursa.service.quartz;
 
 import bursa.entities.AppNotification;
-import bursa.repositories.AppNotificationsRepo;
 import bursa.service.QuartSchedulerService;
+import lombok.extern.log4j.Log4j;
 import org.quartz.*;
 import org.springframework.stereotype.Service;
 
@@ -11,14 +11,13 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Service
+@Log4j
 public class QuartzSchedulerServiceImpl implements QuartSchedulerService {
 
     private Scheduler scheduler;
-    private AppNotificationsRepo appNotificationsRepo;
 
-    public QuartzSchedulerServiceImpl(Scheduler scheduler, AppNotificationsRepo appNotificationsRepo) {
+    public QuartzSchedulerServiceImpl(Scheduler scheduler) {
         this.scheduler = scheduler;
-        this.appNotificationsRepo = appNotificationsRepo;
     }
 
     @Override
@@ -37,7 +36,7 @@ public class QuartzSchedulerServiceImpl implements QuartSchedulerService {
 
             scheduler.scheduleJob(jobDetail, trigger);
         } catch (SchedulerException e) {
-            e.printStackTrace();
+            log.error("Error while scheduling notification", e);
         }
     }
 
@@ -47,7 +46,7 @@ public class QuartzSchedulerServiceImpl implements QuartSchedulerService {
             JobKey jobKey = new JobKey("notificationJob:" + notificationId, "notificationGroup");
             scheduler.deleteJob(jobKey);
         } catch (SchedulerException e) {
-            e.printStackTrace();
+            log.error("Error while canceling scheduled notification", e);
         }
     }
 }

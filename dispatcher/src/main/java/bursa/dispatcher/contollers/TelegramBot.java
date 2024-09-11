@@ -10,7 +10,9 @@ import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsume
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -21,6 +23,8 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static bursa.dispatcher.strings.StringConstants.*;
 
 @Component
 @Log4j
@@ -44,14 +48,14 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
 
     private void setCommands() {
         List<BotCommand> commands = new ArrayList<>();
-        commands.add(new BotCommand("/start", "Initialize bot"));
-        commands.add(new BotCommand("/cancel", "Cancel command and back to basic state"));
-        commands.add(new BotCommand("/register", "Registration in bot via email"));
-        commands.add(new BotCommand("/notifications", "Show notification menu"));
+        commands.add(new BotCommand("/start", START_COMMAND_TEXT));
+        commands.add(new BotCommand("/cancel", CANCEL_COMMAND_TEXT));
+        commands.add(new BotCommand("/registration", REGISTRATION_COMMAND_TEXT));
+        commands.add(new BotCommand("/notifications", NOTIFICATIONS_COMMAND_TEXT));
         try {
             telegramClient.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
-            log.error("Telegram commands setting error", e);
+            log.error(COMMAND_SETTING_ERROR_TEXT, e);
         }
     }
 

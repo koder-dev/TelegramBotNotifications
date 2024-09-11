@@ -21,6 +21,7 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long telegramUserId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
     private String firstName;
@@ -28,9 +29,22 @@ public class AppUser {
     private String username;
     private String email;
     private Boolean isActive;
+
     @Enumerated(EnumType.STRING)
     private UserState userState;
     private Long editingNotification;
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppVideo> videos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppAudio> audios = new ArrayList<>();
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppDocument> documents = new ArrayList<>();
+
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppPhoto> photos = new ArrayList<>();
 
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AppNotification> notifications = new ArrayList<>();

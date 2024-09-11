@@ -3,7 +3,7 @@ package bursa.service.quartz;
 import bursa.entities.AppNotification;
 import bursa.repositories.AppNotificationsRepo;
 import bursa.service.NotificationsProducerService;
-import bursa.service.exceptions.NotificationNotFoundException;
+import bursa.utils.RenderUiTools;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.springframework.stereotype.Component;
@@ -30,10 +30,8 @@ public class NotificationJob implements Job {
         Optional<AppNotification> optionalAppNotification = appNotificationsRepo.findById(notificationId);
         if (optionalAppNotification.isEmpty()) return;
         var appNotification = optionalAppNotification.get();
-
-        var message = SendMessage.builder().text(appNotification.getNotifyText()).chatId(chatId).build();
+        var markup = RenderUiTools.renderRepeatNotificationButtons(appNotification.getId());
+        var message = SendMessage.builder().text(appNotification.getNotifyText()).chatId(chatId).replyMarkup(markup).build();
         notificationsProducerService.produceAnswer(message);
-
-        appNotificationsRepo.delete(appNotification);
     }
 }

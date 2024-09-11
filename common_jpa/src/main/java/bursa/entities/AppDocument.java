@@ -18,6 +18,10 @@ public class AppDocument {
 
     private String telegramFileId;
     private String docName;
+    private String downloadLink;
+    @ManyToOne
+    @JoinColumn(name="user_id")
+    private AppUser appUser;
     @OneToOne
     private BinaryContent binaryContent;
     private String mimeType;

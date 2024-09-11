@@ -8,7 +8,8 @@ public enum CallbackData {
     EDIT_NOTIFICATION_TEXT("edit-notification-text"),
     DELETE_NOTIFICATION("delete-notification"),
     BACK_TO_MAIN_MENU("back-to-main-menu"),
-    BACK_TO_NOTIFICATION_MENU("back-to-notification-menu");
+    BACK_TO_NOTIFICATION_MENU("back-to-notification-menu"),
+    REPEAT_NOTIFICATION_AFTER("repeat-notification-after");
 
     private final String value;
 

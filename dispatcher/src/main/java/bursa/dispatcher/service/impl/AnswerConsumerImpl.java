@@ -12,7 +12,7 @@ import static bursa.model.RabbitQueue.*;
 
 @Service
 public class AnswerConsumerImpl implements AnswerConsumer {
-    private UpdateController updateController;
+    private final UpdateController updateController;
 
     public AnswerConsumerImpl(UpdateController updateController) {
         this.updateController = updateController;
@@ -35,4 +35,5 @@ public class AnswerConsumerImpl implements AnswerConsumer {
     public void consume(DeleteMessage deleteMessage) {
         updateController.setView(deleteMessage);
     }
+
 }

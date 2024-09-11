@@ -16,11 +16,13 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import java.util.Objects;
 
+import static bursa.service.strings.NodeModuleStringConstants.*;
+
 @Service
 @Log4j
 public class AppUserServiceImpl implements AppUserService {
-    private AppUserRepo appUserRepo;
-    private CryptoTool cryptoTool;
+    private final AppUserRepo appUserRepo;
+    private final CryptoTool cryptoTool;
     @Value("${service.mail.uri}")
     private String mailUri;
 
@@ -32,13 +34,13 @@ public class AppUserServiceImpl implements AppUserService {
     @Override
     public String registerUser(AppUser user) {
         if (user.getIsActive()) {
-            return "You are already registered";
+            return USER_ALREADY_REGISTERED_TEXT;
         } else if (Objects.nonNull(user.getEmail())) {
-            return "We already sent a confirmation link to your email.\nPlease go to link to activate account.";
+            return MAIL_ALREADY_SENT_TEXT;
         }
         user.setUserState(UserState.WAIT_FOR_EMAIL);
         appUserRepo.save(user);
-        return "Write your email to activate account.";
+        return WRITE_YOUR_MAIL_TEXT;
     }
 
     @Override
@@ -47,7 +49,7 @@ public class AppUserServiceImpl implements AppUserService {
             InternetAddress emailAddr = new InternetAddress(email);
             emailAddr.validate();
         } catch (AddressException e) {
-            return "Incorrect email address.For cancellation write /cancel";
+            return INCORRECT_EMAIL_TEXT;
         }
         var optionalUser = appUserRepo.findByEmail(email);
         if (optionalUser.isEmpty()) {
@@ -58,15 +60,15 @@ public class AppUserServiceImpl implements AppUserService {
             var cryptoUserId = cryptoTool.hashOf(user.getId());
             var response = sendRequestToMailService(cryptoUserId, email);
             if (response.getStatusCode() != HttpStatus.OK) {
-                String msg = String.format("Sending a letter error to email %s", email);
+                String msg = String.format(SENDING_LETTER_ERROR_TEXT, email);
                 log.error(msg);
                 user.setEmail(null);
                 appUserRepo.save(user);
                 return msg;
             }
-            return "We sent a confirmation link to your email.";
+            return LETTER_SENT_TEXT;
         } else {
-            return "This email is already registered";
+            return EMAIL_IS_ALREADY_REGISTERED_TEXT;
         }
     }
 

@@ -17,6 +17,11 @@ public class AppVideo {
     private Long id;
 
     private String telegramFileId;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private AppUser appUser;
+    private String fileName;
+    private String downloadLink;
     @OneToOne
     private BinaryContent binaryContent;
     private Long fileSize;

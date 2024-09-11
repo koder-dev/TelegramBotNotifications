@@ -5,7 +5,14 @@ public enum TelegramCommands {
     REGISTRATION("/registration"),
     NOTIFICATIONS("/notifications"),
     CANCEL("/cancel"),
-    START("/start");
+    START("/start"),
+    SEARCH("/search"),
+    BACK("/back"),
+    DISC("/disc"),
+    VIDEOS("/videos"),
+    PHOTOS("/photos"),
+    DOCS("/docs"),
+    AUDIO("/audio");
 
     private final String command;
 
@@ -27,7 +34,4 @@ public enum TelegramCommands {
         return command;
     }
 
-    public boolean equals(String command) {
-        return this.toString().equals(command);
-    }
 }

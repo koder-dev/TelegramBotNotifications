@@ -33,6 +33,12 @@ public class ConsumerServiceImpl implements ConsumerService {
     }
 
     @Override
+    @RabbitListener(queues = PHOTO_MESSAGE_UPDATE)
+    public void consumerPhotoMessageUpdates(Update update) {
+        mainService.processPhotoMessage(update);
+    }
+
+    @Override
     @RabbitListener(queues = AUDIO_MESSAGE_UPDATE)
     public void consumerAudioMessageUpdates(Update update) {
         log.debug("NODE: audio message is received");
@@ -44,5 +50,11 @@ public class ConsumerServiceImpl implements ConsumerService {
     public void consumerDocMessageUpdates(Update update) {
         log.debug("NODE: doc message is received");
         mainService.processDocMessage(update);
+    }
+
+    @Override
+    @RabbitListener(queues = DISC_CALLBACK_QUERY)
+    public void consumerDiscCallbackQueryUpdates(Update update) {
+        log.debug("NODE: disc callback query is received");
     }
 }

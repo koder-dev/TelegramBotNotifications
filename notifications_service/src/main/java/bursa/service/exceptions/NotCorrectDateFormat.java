@@ -1,17 +1,8 @@
 package bursa.service.exceptions;
 
-import lombok.Getter;
+public class NotCorrectDateFormat extends Exception {
 
-@Getter
-public class NotCorrectDateFormat extends RuntimeException {
-    private Long chatId;
-
-    public NotCorrectDateFormat() {
-        super();
-    }
-
-    public NotCorrectDateFormat(String message, Long chatId) {
+    public NotCorrectDateFormat(String message) {
         super(message);
-        this.chatId = chatId;
     }
 }

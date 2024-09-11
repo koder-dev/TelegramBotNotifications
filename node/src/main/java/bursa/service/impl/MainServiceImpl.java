@@ -1,10 +1,8 @@
 package bursa.service.impl;
 
-import bursa.entities.AppDocument;
-import bursa.entities.AppUser;
-import bursa.entities.AppVideo;
+import bursa.entities.*;
 import bursa.exceptions.UploadFileException;
-import bursa.repositories.AppUserRepo;
+import bursa.repositories.*;
 import bursa.service.*;
 import bursa.service.enums.LinkType;
 import bursa.service.enums.TelegramCommands;
@@ -17,6 +15,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import static bursa.enums.UserState.*;
 import static bursa.model.RabbitQueue.*;
 import static bursa.service.enums.TelegramCommands.*;
+import static bursa.service.strings.NodeModuleStringConstants.CANCEL_COMMAND_TEXT;
+import static bursa.service.strings.NodeModuleStringConstants.UNKNOWN_USER_STATE_ERROR_TEXT;
 
 @Service
 @Log4j
@@ -26,13 +26,21 @@ public class MainServiceImpl implements MainService {
     private final FileService fileService;
     private final AppUserService appUserService;
     private final CommandHandlerService commandHandlerService;
+    private final AppVideoRepo appVideoRepo;
+    private final AppDocumentRepo appDocumentRepo;
+    private final AppAudioRepo appAudioRepo;
+    private final AppPhotoRepo appPhotoRepo;
 
-    public MainServiceImpl(ProducerService producerService, AppUserRepo appUserRepo, FileService fileService, AppUserService appUserService, CommandHandlerService commandHandlerService) {
+    public MainServiceImpl(ProducerService producerService, AppUserRepo appUserRepo, FileService fileService, AppUserService appUserService, CommandHandlerService commandHandlerService, AppVideoRepo appVideoRepo, AppDocumentRepo appDocumentRepo, AppAudioRepo appAudioRepo, AppPhotoRepo appPhotoRepo) {
         this.producerService = producerService;
         this.appUserRepo = appUserRepo;
         this.fileService = fileService;
         this.appUserService = appUserService;
         this.commandHandlerService = commandHandlerService;
+        this.appVideoRepo = appVideoRepo;
+        this.appDocumentRepo = appDocumentRepo;
+        this.appAudioRepo = appAudioRepo;
+        this.appPhotoRepo = appPhotoRepo;
     }
 
     @Override
@@ -50,20 +58,20 @@ public class MainServiceImpl implements MainService {
     private String cancelProcess(AppUser appUser) {
         appUser.setUserState(BASIC_STATE);
         appUserRepo.save(appUser);
-        return "Command canceled";
+        return CANCEL_COMMAND_TEXT;
     }
 
     private void handleUserState(Update update, AppUser user, TelegramCommands telegramCommand) {
         var userState = user.getUserState();
         var chatId = update.getMessage().getChatId();
         var text = update.getMessage().getText();
-        String UNKNOWN_USER_STATE = "Internal server error.Unknown user state!Please enter /cancel to return to basic state";
         if (NOTIFICATIONS_STATE.equals(userState) || NOTIFICATIONS.equals(telegramCommand)) producerService.produce(NOTIFICATION_MESSAGE_UPDATE, update);
         else if (NOTIFICATION_EDIT_TIME_STATE.equals(userState)) producerService.produce(NOTIFICATION_EDIT_TIME_MESSAGE, update);
         else if (NOTIFICATION_EDIT_TEXT_STATE.equals(userState)) producerService.produce(NOTIFICATION_EDIT_TEXT_MESSAGE, update);
         else if (WAIT_FOR_EMAIL.equals(userState)) sendAnswer(appUserService.setEmail(user, text), chatId);
         else if (BASIC_STATE.equals(userState)) sendAnswer(commandHandlerService.processCommand(user, telegramCommand, chatId));
-        else sendAnswer(UNKNOWN_USER_STATE, chatId);
+        else if (DISC_STATE.equals(userState)) sendAnswer(commandHandlerService.processDiscCommand(user, telegramCommand, chatId));
+        else sendAnswer(UNKNOWN_USER_STATE_ERROR_TEXT, chatId);
     }
 
     private void sendAnswer(SendMessage message) {
@@ -97,9 +105,41 @@ public class MainServiceImpl implements MainService {
         if (isNotAllowedToSendContent(chatId, appUser)) {
             return;
         }
-        //TODO реалізувати зберігання audio
-        var answer = "Audio has uploaded.Link for downloading - http:2000";
-        sendAnswer(answer, chatId);
+
+        try {
+            AppAudio audio = fileService.processAudio(update.getMessage(), appUser);
+            String link = fileService.generateLink(audio.getId(), LinkType.GET_AUDIO);
+            audio.setDownloadLink(link);
+            appAudioRepo.save(audio);
+            var answer = "Audio has uploaded.Link for downloading - " + link;
+            sendAnswer(answer, chatId);
+        } catch (UploadFileException ex) {
+            log.error(ex);
+            String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
+            sendAnswer(error, chatId);
+        }
+    }
+
+    @Override
+    public void processPhotoMessage(Update update) {
+        var appUser = findOrSaveAppUser(update);
+        var chatId = update.getMessage().getChatId();
+        if (isNotAllowedToSendContent(chatId, appUser)) {
+            return;
+        }
+
+        try {
+            AppPhoto photo = fileService.processPhoto(update.getMessage(), appUser);
+            String link = fileService.generateLink(photo.getId(), LinkType.GET_PHOTO);
+            photo.setDownloadLink(link);
+            appPhotoRepo.save(photo);
+            var answer = "Photo has uploaded.Link for downloading - " + link;
+            sendAnswer(answer, chatId);
+        } catch (UploadFileException ex) {
+            log.error(ex);
+            String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
+            sendAnswer(error, chatId);
+        }
     }
 
     @Override
@@ -112,6 +152,8 @@ public class MainServiceImpl implements MainService {
         try {
             AppDocument appDocument = fileService.processDoc(update.getMessage());
             String link = fileService.generateLink(appDocument.getId(), LinkType.GET_DOC);
+            appDocument.setDownloadLink(link);
+            appDocumentRepo.save(appDocument);
             var answer = "Document has uploaded.Link for downloading - " + link;
             sendAnswer(answer, chatId);
         } catch (UploadFileException ex) {
@@ -130,8 +172,10 @@ public class MainServiceImpl implements MainService {
         }
 
         try {
-            AppVideo appVideo = fileService.processVideo(update.getMessage());
+            AppVideo appVideo = fileService.processVideo(update.getMessage(), appUser);
             String link = fileService.generateLink(appVideo.getId(), LinkType.GET_VIDEO);
+            appVideo.setDownloadLink(link);
+            appVideoRepo.save(appVideo);
             var answer = "Video has uploaded.Link for downloading - " + link;
             sendAnswer(answer, chatId);
         } catch (UploadFileException ex) {

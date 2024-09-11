@@ -5,10 +5,12 @@ import bursa.utils.dto.MailParams;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static bursa.string.MailTextConst.MAIL_SENT_OK_RESPONSE_TEXT;
+
 @RestController
 @RequestMapping("/mail")
 public class MailController {
-    private MailSenderService mailSenderService;
+    private final MailSenderService mailSenderService;
 
     public MailController(MailSenderService mailSenderService) {
         this.mailSenderService = mailSenderService;
@@ -17,6 +19,6 @@ public class MailController {
     @PostMapping("/send")
     public ResponseEntity<String> sendMail(@RequestBody MailParams mailParams) {
         mailSenderService.send(mailParams);
-        return ResponseEntity.ok("Mail sent");
+        return ResponseEntity.ok(MAIL_SENT_OK_RESPONSE_TEXT);
     }
 }

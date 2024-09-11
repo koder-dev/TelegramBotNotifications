@@ -9,7 +9,9 @@ import bursa.service.MainService;
 import bursa.service.QuartSchedulerService;
 import bursa.service.enums.CallbackData;
 import bursa.service.exceptions.NotCorrectDateFormat;
-import bursa.utils.DateParser;
+import bursa.utils.DateTimeParser;
+import bursa.utils.RenderUiTools;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -20,11 +22,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import static bursa.enums.UserState.*;
 import static bursa.service.enums.CallbackData.*;
+import static bursa.strings.TelegramTextResponses.*;
 
 @Service
 public class MainServiceImpl implements MainService {
@@ -53,34 +53,6 @@ public class MainServiceImpl implements MainService {
         }
     }
 
-    private void createNotification(Update update, AppUser user) {
-        var info = update.getMessage().getText().split("/");
-        var chatId = update.getMessage().getChatId();
-        var notifyTime = DateParser.parse(info[1]);
-        var notifyText = info[0];
-        if (notifyTime.isBefore(LocalDateTime.now())) throw new NotCorrectDateFormat("You can only make notification for future", chatId);
-        var transientNotification = AppNotification.builder().appUser(user).notifyTime(notifyTime).notifyText(notifyText).build();
-        var persistedNotification = appNotificationsRepo.save(transientNotification);
-        var messageText = String.format("Notification with id: %s successfully created!", persistedNotification.getId());
-        var message = SendMessage.builder().text(messageText).replyMarkup(renderBackMenu()).chatId(chatId).build();
-        user.setUserState(BASIC_STATE);
-        appUserRepo.save(user);
-        sendMessage(message);
-        quartSchedulerService.scheduleNotification(notifyTime, chatId, persistedNotification);
-    }
-
-    private void welcomeNotificationMessage(Long chatId) {
-        var row = new InlineKeyboardRow();
-        var createNewNotificationBtn = InlineKeyboardButton.builder().callbackData(CREATE_NEW_NOTIFICATION.toString()).text("Create New Notification").build();
-        var showAllNotificationsBtn = InlineKeyboardButton.builder().callbackData(SHOW_ALL_NOTIFICATIONS.toString()).text("Show All Notifications").build();
-
-        row.add(createNewNotificationBtn);
-        row.add(showAllNotificationsBtn);
-        var inlineKeyboard = InlineKeyboardMarkup.builder().keyboardRow(row).build();
-        var message = SendMessage.builder().text("Please choose what you want to do").replyMarkup(inlineKeyboard).chatId(chatId).build();
-        sendMessage(message);
-    }
-
     @Override
     public void processNotificationCallbackQuery(Update update) {
         var dataArr = update.getCallbackQuery().getData().split("/");
@@ -94,18 +66,64 @@ public class MainServiceImpl implements MainService {
         } else if (EDIT_NOTIFICATION.equals(callbackData)) {
             editNotificationMessageMenu(update, dataArr[1]);
         } else if (EDIT_NOTIFICATION_TEXT.equals(callbackData)) {
-            var text = "Please enter a new description for notification";
-            editNotificationMessage(update, dataArr[1], NOTIFICATION_EDIT_TEXT_STATE, text);
+            editNotificationMessage(update, dataArr[1], NOTIFICATION_EDIT_TEXT_STATE, NEW_DESCRIPTION_EDIT_MESSAGE_TEXT);
         } else if (EDIT_NOTIFICATION_TIME.equals(callbackData)) {
-            var text = "Please enter a new time for notification in format yyyyy-mm-ddTHH:mm:ss";
-            editNotificationMessage(update, dataArr[1], NOTIFICATION_EDIT_TIME_STATE, text);
+            editNotificationMessage(update, dataArr[1], NOTIFICATION_EDIT_TIME_STATE, NEW_TIME_EDIT_MESSAGE_TEXT);
         } else if (DELETE_NOTIFICATION.equals(callbackData)) {
             deleteNotification(update, dataArr[1]);
+        } else if (REPEAT_NOTIFICATION_AFTER.equals(callbackData)) {
+            repeatNotification(update, dataArr[1], dataArr[2]);
         } else {
-            var error = "Unsupported callbackDataType!Please enter /cancel to back to the menu";
-            var message = SendMessage.builder().text(error).chatId(update.getCallbackQuery().getMessage().getChatId()).build();
+            var message = SendMessage.builder().text(INTERNAL_SERVER_ERROR_TEXT).chatId(update.getCallbackQuery().getMessage().getChatId()).build();
             sendMessage(message);
         }
+    }
+
+    private void repeatNotification(Update update, String afterTime, String notificationId) {
+        var messageId = update.getCallbackQuery().getMessage().getMessageId();
+        var chatId = update.getCallbackQuery().getMessage().getChatId();
+        deleteMessage(messageId, chatId);
+        appNotificationsRepo.findById(Long.valueOf(notificationId)).ifPresentOrElse((notification) -> {
+            var newNotifyTime = notification.getNotifyTime().plusMinutes(Long.parseLong(afterTime));
+            notification.setNotifyTime(newNotifyTime);
+            appNotificationsRepo.save(notification);
+            SendMessage message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_DELAYED).chatId(chatId).build();
+            sendMessage(message);
+            quartSchedulerService.scheduleNotification(newNotifyTime, chatId, notification);
+        }, () -> {
+            var message = SendMessage.builder().text(NOTIFICATION_CANNOT_BE_DELAYED).chatId(chatId).build();
+            sendMessage(message);
+        });
+    }
+
+    private void createNotification(Update update, AppUser user) {
+        var info = update.getMessage().getText();
+        var chatId = update.getMessage().getChatId();
+        SendMessage message;
+        try {
+            var notifyTime = DateTimeParser.parse(info);
+            var transientNotification = AppNotification.builder().appUser(user).notifyTime(notifyTime).notifyText(info).build();
+            var persistedNotification = appNotificationsRepo.save(transientNotification);
+            InlineKeyboardMarkup replyMarkup = RenderUiTools.renderBackMenu();
+            message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_CREATED_TEXT).replyMarkup(replyMarkup).chatId(chatId).build();
+            appUserRepo.save(user);
+            quartSchedulerService.scheduleNotification(notifyTime, chatId, persistedNotification);
+        } catch (NotCorrectDateFormat ex) {
+            message = SendMessage.builder().text(ex.getMessage()).chatId(chatId).build();
+        }
+        sendMessage(message);
+    }
+
+    private void welcomeNotificationMessage(Long chatId) {
+        var row = new InlineKeyboardRow();
+        var createNewNotificationBtn = InlineKeyboardButton.builder().callbackData(CREATE_NEW_NOTIFICATION.toString()).text(CREATE_NEW_NOTIFICATION_BTN_TEXT).build();
+        var showAllNotificationsBtn = InlineKeyboardButton.builder().callbackData(SHOW_ALL_NOTIFICATIONS.toString()).text(SHOW_ALL_NOTIFICATION_BTN_TEXT).build();
+
+        row.add(createNewNotificationBtn);
+        row.add(showAllNotificationsBtn);
+        var inlineKeyboard = InlineKeyboardMarkup.builder().keyboardRow(row).build();
+        var message = SendMessage.builder().text(WELCOME_MESSAGE_TEXT).replyMarkup(inlineKeyboard).chatId(chatId).build();
+        sendMessage(message);
     }
 
     private void backToNotificationMenuMessage(Update update) {
@@ -116,6 +134,7 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
+    @Transactional
     public void processNotificationEditText(Update update) {
         var user = findOrSaveAppUser(update);
         var notification = appNotificationsRepo.findById(user.getEditingNotification()).orElseThrow();
@@ -125,37 +144,44 @@ public class MainServiceImpl implements MainService {
         appNotificationsRepo.save(notification);
         user.setUserState(NOTIFICATIONS_STATE);
         appUserRepo.save(user);
-        var message = SendMessage.builder().text("Notification description successfully changed").replyMarkup(renderBackMenu()).chatId(chatId).build();
+        InlineKeyboardMarkup replyMarkup = RenderUiTools.renderBackMenu();
+        var message = SendMessage.builder().text(NOTIFICATION_DESCRIPTION_SUCCESSFULLY_CHANGED_TEXT).replyMarkup(replyMarkup).chatId(chatId).build();
         sendMessage(message);
     }
 
 
     @Override
+    @Transactional
     public void processNotificationEditTime(Update update) {
         var user = findOrSaveAppUser(update);
         var notification = appNotificationsRepo.findById(user.getEditingNotification()).orElseThrow();
         var text = update.getMessage().getText();
         var chatId = update.getMessage().getChatId();
-        var startTime = DateParser.parse(text);
-        if (startTime.isBefore(LocalDateTime.now())) throw new NotCorrectDateFormat("You can only make notification for future", chatId);
-        notification.setNotifyTime(startTime);
-        appNotificationsRepo.save(notification);
-        user.setUserState(NOTIFICATIONS_STATE);
-        appUserRepo.save(user);
-        quartSchedulerService.cancelNotification(user.getEditingNotification());
-        quartSchedulerService.scheduleNotification(startTime, chatId, notification);
-        var message = SendMessage.builder().text("Notification time successfully changed").replyMarkup(renderBackMenu()).chatId(chatId).build();
-        sendMessage(message);
+        try {
+            var startTime = DateTimeParser.parse(text);
+            notification.setNotifyTime(startTime);
+            appNotificationsRepo.save(notification);
+            user.setUserState(NOTIFICATIONS_STATE);
+            appUserRepo.save(user);
+            quartSchedulerService.cancelNotification(user.getEditingNotification());
+            quartSchedulerService.scheduleNotification(startTime, chatId, notification);
+            InlineKeyboardMarkup replyMarkup = RenderUiTools.renderBackMenu();
+            var message = SendMessage.builder().text(NOTIFICATION_TIME_SUCCESSFULLY_CHANGED_TEXT).replyMarkup(replyMarkup).chatId(chatId).build();
+            sendMessage(message);
+        } catch (NotCorrectDateFormat ex) {
+            sendMessage(SendMessage.builder().text(ex.getMessage()).chatId(chatId).build());
+        }
     }
 
-    private void deleteNotification(Update update, String id) {
+    public void deleteNotification(Update update, String id) {
         var notificationId = Long.valueOf(id);
         appNotificationsRepo.deleteById(notificationId);
         var user = findOrSaveAppUser(update);
         var messageId = update.getCallbackQuery().getMessage().getMessageId();
         var chatId = update.getCallbackQuery().getMessage().getChatId();
         deleteMessage(messageId, chatId);
-        var message = SendMessage.builder().text("Notification successfully deleted").chatId(chatId).replyMarkup(renderBackMenu()).build();
+        InlineKeyboardMarkup replyMarkup = RenderUiTools.renderBackMenu();
+        var message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_DELETED_TEXT).chatId(chatId).replyMarkup(replyMarkup).build();
         sendMessage(message);
         user.setUserState(NOTIFICATIONS_STATE);
         appUserRepo.save(user);
@@ -180,45 +206,9 @@ public class MainServiceImpl implements MainService {
         var messageId = update.getCallbackQuery().getMessage().getMessageId();
         var chatId = update.getCallbackQuery().getMessage().getChatId();
         deleteMessage(messageId, chatId);
-        var text = "Please choose what you want to do";
-        var keyboard = renderEditNotificationMenu(id);
-        var message = SendMessage.builder().text(text).chatId(chatId).replyMarkup(keyboard).build();
+        var keyboard = RenderUiTools.renderEditNotificationMenu(id);
+        var message = SendMessage.builder().text(CHOOSE_EDIT_TEXT).chatId(chatId).replyMarkup(keyboard).build();
         sendMessage(message);
-    }
-
-    private InlineKeyboardMarkup renderBackMenu() {
-        var row = new InlineKeyboardRow();
-        var backToMainMenuBtn = InlineKeyboardButton.builder()
-                .text("Back to main menu")
-                .callbackData(BACK_TO_MAIN_MENU.toString())
-                .build();
-        var backToNotificationMenuBtn = InlineKeyboardButton.builder()
-                .text("Back to notification menu")
-                .callbackData(BACK_TO_NOTIFICATION_MENU.toString())
-                .build();
-        row.add(backToMainMenuBtn);
-        row.add(backToNotificationMenuBtn);
-        return InlineKeyboardMarkup.builder().keyboardRow(row).build();
-    }
-
-    private InlineKeyboardMarkup renderEditNotificationMenu(String id) {
-        var row = new InlineKeyboardRow();
-        var EditTimeBtn = InlineKeyboardButton.builder()
-                .text("Change to another time")
-                .callbackData(EDIT_NOTIFICATION_TIME + "/" + id)
-                .build();
-        var EditTextBtn = InlineKeyboardButton.builder()
-                .text("Change text")
-                .callbackData(EDIT_NOTIFICATION_TEXT + "/" + id)
-                .build();
-        var DeleteBtn = InlineKeyboardButton.builder()
-                .text("Delete notification")
-                .callbackData(DELETE_NOTIFICATION + "/" + id)
-                .build();
-        row.add(EditTimeBtn);
-        row.add(EditTextBtn);
-        row.add(DeleteBtn);
-        return InlineKeyboardMarkup.builder().keyboardRow(row).build();
     }
 
     private void showAllNotificationMessage(Update update) {
@@ -227,21 +217,13 @@ public class MainServiceImpl implements MainService {
         var chatId = update.getCallbackQuery().getMessage().getChatId();
         var notificationList = appNotificationsRepo.findByAppUserId(user.getId());
         deleteMessage(messageId, chatId);
-        InlineKeyboardMarkup notificationKeyboardMarkup = renderNotificationList(notificationList);
-        var message = SendMessage.builder().text("Here your notifications!").replyMarkup(notificationKeyboardMarkup).chatId(chatId).build();
+        InlineKeyboardMarkup notificationKeyboardMarkup = RenderUiTools.renderNotificationList(notificationList);
+        var message = SendMessage.builder()
+                .text(notificationList.isEmpty() ? NO_NOTIFICATION_LIST_MESSAGE_TEXT : NOTIFICATION_LIST_MESSAGE_TEXT)
+                .replyMarkup(notificationKeyboardMarkup)
+                .chatId(chatId)
+                .build();
         sendMessage(message);
-    }
-
-    private InlineKeyboardMarkup renderNotificationList(List<AppNotification> notificationList) {
-        var inlineKeyboard = InlineKeyboardMarkup.builder();
-        notificationList.stream().map((notification) -> {
-            InlineKeyboardRow row = new InlineKeyboardRow();
-            var btnText = notification.getNotifyText() + " " + notification.getNotifyTime().toString();
-            var btn = InlineKeyboardButton.builder().text(btnText).callbackData(EDIT_NOTIFICATION + "/" +notification.getId().toString()).build();
-            row.add(btn);
-            return row;
-        }).forEach(inlineKeyboard::keyboardRow);
-        return inlineKeyboard.build();
     }
 
     private void deleteMessage(Integer messageId, Long chatId) {
@@ -251,7 +233,7 @@ public class MainServiceImpl implements MainService {
 
     private void createNewNotificationMessage(Update update) {
         EditMessageText editMessageText = EditMessageText.builder()
-                .text("Write a notification info in format.\nNotifyText/TIME\nExample:Dinner/18:00 or Meeting/30.09 18:00\nDate formats - 18:00, 30.09 17:59, 30 September 17:32, 2024-09-02T23:20:53")
+                .text(CREATE_NEW_NOTIFICATION_MESSAGE_TEXT)
                 .chatId(update.getCallbackQuery().getMessage().getChatId())
                 .messageId(update.getCallbackQuery().getMessage().getMessageId())
                 .build();
@@ -266,7 +248,7 @@ public class MainServiceImpl implements MainService {
         User telegramUser;
         if (update.hasCallbackQuery()) telegramUser = update.getCallbackQuery().getFrom();
         else if (update.hasMessage()) telegramUser = update.getMessage().getFrom();
-        else throw new RuntimeException("Incorrect update message");
+        else throw new RuntimeException(INTERNAL_SERVER_ERROR_TEXT);
         return appUserRepo.findByTelegramUserId(telegramUser.getId()).orElseGet(() -> {
             AppUser appUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())

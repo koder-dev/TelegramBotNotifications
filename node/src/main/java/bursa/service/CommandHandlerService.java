@@ -6,4 +6,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 public interface CommandHandlerService {
     SendMessage processCommand(AppUser user, TelegramCommands command, Long chatId);
+
+    SendMessage processDiscCommand(AppUser user, TelegramCommands telegramCommand, Long chatId);
 }

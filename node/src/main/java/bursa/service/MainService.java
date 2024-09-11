@@ -7,4 +7,5 @@ public interface MainService {
     void processAudioMessage(Update update);
     void processDocMessage(Update update);
     void processVideoMessage(Update update);
+    void processPhotoMessage(Update update);
 }

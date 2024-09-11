@@ -6,5 +6,7 @@ public interface ConsumerService {
     void consumerTextMessageUpdates(Update update);
     void consumerVideoMessageUpdates(Update update);
     void consumerAudioMessageUpdates(Update update);
+    void consumerPhotoMessageUpdates(Update update);
     void consumerDocMessageUpdates(Update update);
+    void consumerDiscCallbackQueryUpdates(Update update);
 }
