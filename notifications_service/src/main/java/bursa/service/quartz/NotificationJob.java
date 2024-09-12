@@ -14,8 +14,8 @@ import java.util.Optional;
 @Component
 public class NotificationJob implements Job {
 
-    private NotificationsProducerService notificationsProducerService;
-    private AppNotificationsRepo appNotificationsRepo;
+    private final NotificationsProducerService notificationsProducerService;
+    private final AppNotificationsRepo appNotificationsRepo;
 
     public NotificationJob(NotificationsProducerService notificationsProducerService, AppNotificationsRepo appNotificationsRepo) {
         this.notificationsProducerService = notificationsProducerService;

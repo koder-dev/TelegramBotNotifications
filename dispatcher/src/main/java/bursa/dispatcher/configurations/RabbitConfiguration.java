@@ -60,6 +60,11 @@ public class RabbitConfiguration {
     }
 
     @Bean
+    public Queue editReplyMarkupAnswerMessageQueue() {
+        return createQueueWithDLQ(EDIT_MESSAGE_MARKUP_ANSWER);
+    }
+
+    @Bean
     public Queue notificationMessageQueue() {
         return createQueueWithDLQ(NOTIFICATION_MESSAGE_UPDATE);
     }
@@ -144,6 +149,11 @@ public class RabbitConfiguration {
     }
 
     @Bean
+    public Queue editReplyMarkupAnswerMessageDLQ() {
+        return createDLQ(EDIT_MESSAGE_MARKUP_ANSWER);
+    }
+
+    @Bean
     public Queue deleteMessageDLQ() {
         return createDLQ(DELETE_MESSAGE);
     }
@@ -197,6 +207,11 @@ public class RabbitConfiguration {
     @Bean
     public Binding answerMessageDLQBinding() {
         return createDLQBinding(ANSWER_MESSAGE);
+    }
+
+    @Bean
+    public Binding editReplyMarkupAnswerMessageDLQBinding() {
+        return createDLQBinding(EDIT_MESSAGE_MARKUP_ANSWER);
     }
 
     @Bean

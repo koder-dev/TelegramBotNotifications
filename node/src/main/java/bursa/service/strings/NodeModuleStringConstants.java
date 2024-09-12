@@ -13,6 +13,19 @@ public class NodeModuleStringConstants {
     public static final String CANCEL_COMMAND_TEXT = "Відміна команди";
     public static final String UNKNOWN_USER_STATE_ERROR_TEXT = "Внутрішня помилка серверу.Будь ласка введіть /cancel для відміни";
     public static final String DISC_COMMAND_TEXT = "Будь ласка, виберіть, що вас цікавить.";
+    public static final String UPLOAD_FILE_EXCEPTION_TEXT = "Під час завантаження файлу сталася помилка. Будь ласка введіть /cancel та спробуйте ще раз.";
+    public static final String DOWNLOADING_FILE_FAILED_TEXT = "Сталася помилка під час завантаження файлу з ресурсу.Будь ласка введіть /cancel та спробуйте пізніше!";
+    public static final String CREATING_URL_FAILED_TEXT = "Внутрішня помилка серверу під час створення url!Будь ласка введіть /cancel та спробуйте пізніше!";
+    public static final String DOWNLOAD_DOC_TEXT = "Завантажити документ";
+    public static final String DOWNLOAD_PHOTO_TEXT = "Завантажити фотографію";
+    public static final String DOWNLOAD_VIDEO_TEXT = "Завантажити відео";
+    public static final String DOWNLOAD_AUDIO_TEXT = "Завантажити аудіозапис";
+    public static final String NEXT_SYMBOL = "➡️";
+    public static final String PREV_SYMBOL = "⬅️";
+    public static final String CHOOSE_MEDIA_TEXT = "Виберіть медіа яке ви хочете завантажити";
+    public static final String INCORRECT_MEDIA_CLASS_TEXT = "Не підтримувальний тип файлу. Будь ласка введіть /cancel для відміни.";
+    public static final String MEDIAL_HAS_UPLOADED_TEXT = "Медіа успішно завантажене на сервер.Ви можете його заванатижити за цим посиланням - ";
+    public static final String NOT_REGISTERED_ACCOUNT_TEXT = "Зареєструйть, щоб мати змогу завантажувати медіа.Для реєстрації введіть /registration";
     public static final String HELP_COMMAND_TEXT = """
             Ось список моїх основних можливостей:
             

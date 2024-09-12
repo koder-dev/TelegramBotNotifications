@@ -1,6 +1,7 @@
 package bursa.service.impl;
 
 import bursa.entities.*;
+import bursa.exceptions.IncorrectMediaClassException;
 import bursa.exceptions.UploadFileException;
 import bursa.repositories.*;
 import bursa.service.FileService;
@@ -22,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import static bursa.service.strings.NodeModuleStringConstants.*;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -52,95 +55,62 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public AppVideo processVideo(Message telegramMessage, AppUser user) {
+    public AppVideo processVideo(Message telegramMessage, AppUser user) throws UploadFileException, IncorrectMediaClassException {
         Video telegramVideo = telegramMessage.getVideo();
         String fileId = telegramVideo.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persitentBinaryContent = getPersistentBinaryContent(response);
-            AppVideo transientAppVideo = buildTransientAppVideo(telegramVideo, persitentBinaryContent, user);
+            AppVideo transientAppVideo = (AppVideo) buildMedia(telegramVideo.getFileId(), telegramVideo.getFileId(), telegramVideo.getMimeType(), persitentBinaryContent, user, AppVideo.class);
             return appVideoRepo.save(transientAppVideo);
         } else {
-            throw new UploadFileException("Bad response from telegram service in video downloading: " + response);
+            throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT);
         }
     }
 
     @Override
-    public AppPhoto processPhoto(Message message, AppUser user) {
+    public AppPhoto processPhoto(Message message, AppUser user) throws UploadFileException, IncorrectMediaClassException {
         PhotoSize photoSize = message.getPhoto().get(message.getPhoto().size() - 1);
         String fileId = photoSize.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persitentBinaryContent = getPersistentBinaryContent(response);
-            AppPhoto transientAppPhoto = buildTransientAppPhoto(photoSize, persitentBinaryContent, user);
+            AppPhoto transientAppPhoto = (AppPhoto) buildMedia(photoSize.getFileId(), photoSize.getFileId(), MediaType.IMAGE_JPEG.toString(), persitentBinaryContent, user, AppPhoto.class);
             return appPhotoRepo.save(transientAppPhoto);
         } else {
-            throw new UploadFileException("Bad response from telegram service in video downloading: " + response);
+            throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT);
         }
     }
 
-    private AppPhoto buildTransientAppPhoto(PhotoSize photoSize, BinaryContent persitentBinaryContent, AppUser user) {
-        return AppPhoto.builder()
-                .fileName("Photo " + photoSize.getFileId())
-                .telegramFileId(photoSize.getFileId())
-                .binaryContent(persitentBinaryContent)
-                .appUser(user)
-                .build();
-    }
-
     @Override
-    public AppAudio processAudio(Message message, AppUser user) {
+    public AppAudio processAudio(Message message, AppUser user) throws UploadFileException, IncorrectMediaClassException {
         Audio audio = message.getAudio();
         String fileId = audio.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persitentBinaryContent = getPersistentBinaryContent(response);
-            AppAudio transientAppAudio = buildTransientAppAudio(audio, persitentBinaryContent, user);
+            AppAudio transientAppAudio = (AppAudio) buildMedia(audio.getFileId(), audio.getFileName(), audio.getMimeType(), persitentBinaryContent, user, AppDocument.class);
             return appAudioRepo.save(transientAppAudio);
         } else {
-            throw new UploadFileException("Bad response from telegram service in video downloading: " + response);
+            throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT + response);
         }
     }
 
-    private AppAudio buildTransientAppAudio(Audio audio, BinaryContent persitentBinaryContent, AppUser user) {
-        return AppAudio.builder()
-                .telegramFileId(audio.getFileId())
-                .fileName(audio.getFileName())
-                .appUser(user)
-                .fileSize(audio.getFileSize())
-                .mimeType(audio.getMimeType())
-                .duration(audio.getDuration())
-                .binaryContent(persitentBinaryContent)
-                .build();
-    }
-
-    private AppVideo buildTransientAppVideo(Video telegramVideo, BinaryContent persitentBinaryContent, AppUser user) {
-        return AppVideo.builder()
-                .appUser(user)
-                .telegramFileId(telegramVideo.getFileId())
-                .fileName(telegramVideo.getFileName())
-                .fileSize(telegramVideo.getFileSize())
-                .mimeType(telegramVideo.getMimeType())
-                .duration(telegramVideo.getDuration())
-                .binaryContent(persitentBinaryContent)
-                .build();
-    }
-
     @Override
-    public AppDocument processDoc(Message telegramMessage) {
+    public AppDocument processDoc(Message telegramMessage, AppUser appUser) throws UploadFileException, IncorrectMediaClassException {
         String fileId = telegramMessage.getDocument().getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persistentBinaryContent = getPersistentBinaryContent(response);
             Document telegramDoc = telegramMessage.getDocument();
-            AppDocument transientAppDoc = buildTransientAppDoc(telegramDoc, persistentBinaryContent);
+            AppDocument transientAppDoc = (AppDocument) buildMedia(telegramDoc.getFileId(), telegramDoc.getFileName(), telegramDoc.getMimeType(), persistentBinaryContent, appUser, AppDocument.class);
             return appDocumentRepo.save(transientAppDoc);
         } else {
-            throw new UploadFileException("Bad response from telegram service: " + response);
+            throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT + response);
         }
     }
 
-    private @NotNull BinaryContent getPersistentBinaryContent(ResponseEntity<String> response) {
+    private @NotNull BinaryContent getPersistentBinaryContent(ResponseEntity<String> response) throws UploadFileException {
         String filePath = getFilePath(response);
         byte[] fileInByte = downloadFile(filePath);
         BinaryContent transientBinaryContent = BinaryContent.builder().fileAsArrayOfBytes(fileInByte).build();
@@ -152,30 +122,36 @@ public class FileServiceImpl implements FileService {
         return String.valueOf(json.getJSONObject("result").getString("file_path"));
     }
 
-    private AppDocument buildTransientAppDoc(Document telegramDoc, BinaryContent persistentBinaryContent) {
-        return AppDocument.builder()
-                .telegramFileId(telegramDoc.getFileId())
-                .docName(telegramDoc.getFileName())
-                .binaryContent(persistentBinaryContent)
-                .mimeType(telegramDoc.getMimeType())
-                .fileSize(telegramDoc.getFileSize())
-                .build();
+
+    private AppMedia buildMedia(String fileId, String fileName, String mimeType, BinaryContent persistentBinaryContent, AppUser user, Class<? extends AppMedia> cls) throws IncorrectMediaClassException {
+        AppMedia media;
+        if (cls.equals(AppDocument.class)) media = new AppDocument();
+        else if (cls.equals(AppAudio.class)) media = new AppAudio();
+        else if (cls.equals(AppVideo.class)) media = new AppVideo();
+        else if (cls.equals(AppPhoto.class)) media = new AppPhoto();
+        else throw new IncorrectMediaClassException(INCORRECT_MEDIA_CLASS_TEXT);
+        media.setTelegramFileId(fileId);
+        media.setAppUser(user);
+        media.setBinaryContent(persistentBinaryContent);
+        media.setFileName(fileName);
+        media.setMimeType(mimeType);
+        return media;
     }
 
-    private byte[] downloadFile(String filePath) {
+    private byte[] downloadFile(String filePath) throws UploadFileException {
         String fullUri = fileStorageUri.replace("{bot.token}", botToken)
                 .replace("{filePath}", filePath);
         URL urlObj;
         try {
             urlObj = new URL(fullUri);
         } catch (MalformedURLException e) {
-            throw new UploadFileException("Creating URL failed: " + e);
+            throw new UploadFileException(CREATING_URL_FAILED_TEXT, e);
         }
 
         try (InputStream inputStream = urlObj.openStream()){
             return inputStream.readAllBytes();
         } catch (IOException e) {
-            throw new UploadFileException("Downloading file failed: " + e);
+            throw new UploadFileException(DOWNLOADING_FILE_FAILED_TEXT, e);
         }
     }
 

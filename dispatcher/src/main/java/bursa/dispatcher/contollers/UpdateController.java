@@ -5,10 +5,9 @@ import bursa.dispatcher.utils.MessageUtils;
 import lombok.extern.log4j.Log4j;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -56,10 +55,11 @@ public class UpdateController {
 
     private void processCallbackQuery(Update update) {
         var callbackData = update.getCallbackQuery().getData();
-        if (callbackData.startsWith("disk:")) {
+        if (callbackData.startsWith("disc:")) {
             updateProducer.produce(DISC_CALLBACK_QUERY, update);
+        } else if (callbackData.startsWith("notification:")) {
+            updateProducer.produce(CALLBACK_QUERY, update);
         }
-        updateProducer.produce(CALLBACK_QUERY, update);
     }
 
     private void processVideoMessage(Update update) {
@@ -106,5 +106,13 @@ public class UpdateController {
 
     private void processTextMessage(Update update) {
         updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
+    }
+
+    public void setView(EditMessageReplyMarkup editMessageReplyMarkup) {
+        try {
+            telegramBot.sendAnswerMessage(editMessageReplyMarkup);
+        } catch (TelegramApiException e) {
+            throw new AmqpRejectAndDontRequeueException("Telegram API error: " + e.getMessage());
+        }
     }
 }

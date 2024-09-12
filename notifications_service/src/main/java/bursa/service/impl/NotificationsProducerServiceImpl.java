@@ -22,12 +22,10 @@ public class NotificationsProducerServiceImpl implements NotificationsProducerSe
         rabbitTemplate.convertAndSend(ANSWER_MESSAGE, sendMessage);
     }
 
-    @Override
     public void produceEdit(EditMessageText editMessageText) {
         rabbitTemplate.convertAndSend(EDIT_MESSAGE, editMessageText);
     }
 
-    @Override
     public void produceDelete(DeleteMessage deleteMessage) {
         rabbitTemplate.convertAndSend(DELETE_MESSAGE, deleteMessage);
     }

@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface AppDocumentRepo extends JpaRepository<AppDocument, Long> {
     List<AppDocument> findByAppUserId(long userId, Pageable pageable);
-
+    Long countByAppUserId(Long userId);
 }

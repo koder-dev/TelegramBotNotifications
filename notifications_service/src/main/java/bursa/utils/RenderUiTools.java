@@ -8,7 +8,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.List;
 
 import static bursa.service.enums.CallbackData.*;
-import static bursa.service.enums.CallbackData.DELETE_NOTIFICATION;
 import static bursa.strings.TelegramTextResponses.*;
 
 public class RenderUiTools {

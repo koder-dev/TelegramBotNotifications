@@ -8,4 +8,5 @@ public interface MainService {
     void processDocMessage(Update update);
     void processVideoMessage(Update update);
     void processPhotoMessage(Update update);
+    void processCallbackQueryMessage(Update update);
 }

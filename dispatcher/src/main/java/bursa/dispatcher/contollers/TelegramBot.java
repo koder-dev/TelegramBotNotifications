@@ -10,10 +10,9 @@ import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsume
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -33,7 +32,7 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
     private TelegramClient telegramClient;
     @Value("${bot.token}")
     private String botToken;
-    private UpdateController updateController;
+    private final UpdateController updateController;
 
     public TelegramBot(UpdateController updateController) {
         this.updateController = updateController;
@@ -85,5 +84,9 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
     @Override
     public void consume(Update update) {
         updateController.processUpdate(update);
+    }
+
+    public void sendAnswerMessage(EditMessageReplyMarkup editMessageReplyMarkup) throws TelegramApiException {
+        telegramClient.execute(editMessageReplyMarkup);
     }
 }

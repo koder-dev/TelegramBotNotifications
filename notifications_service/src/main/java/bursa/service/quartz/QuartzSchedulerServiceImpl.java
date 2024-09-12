@@ -14,7 +14,7 @@ import java.util.Date;
 @Log4j
 public class QuartzSchedulerServiceImpl implements QuartSchedulerService {
 
-    private Scheduler scheduler;
+    private final Scheduler scheduler;
 
     public QuartzSchedulerServiceImpl(Scheduler scheduler) {
         this.scheduler = scheduler;

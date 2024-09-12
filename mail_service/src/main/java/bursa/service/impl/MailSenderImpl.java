@@ -12,7 +12,7 @@ import static bursa.string.MailTextConst.MAIL_SUBJECT_TEXT;
 
 @Service
 public class MailSenderImpl implements MailSenderService {
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
     @Value("${spring.mail.username}")
     private String emailFrom;
     @Value("${service.activation.uri}")

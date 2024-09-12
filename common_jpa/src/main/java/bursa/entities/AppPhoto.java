@@ -11,20 +11,16 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 @Table(name = "app_photos")
-public class AppPhoto {
+public class AppPhoto implements AppMedia {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String telegramFileId;
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private AppUser appUser;
     private String fileName;
     private String downloadLink;
     @OneToOne
     private BinaryContent binaryContent;
-    private Long fileSize;
     private String mimeType;
-    private Integer duration;
+
 }

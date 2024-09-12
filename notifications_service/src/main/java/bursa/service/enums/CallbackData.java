@@ -1,15 +1,15 @@
 package bursa.service.enums;
 
 public enum CallbackData {
-    CREATE_NEW_NOTIFICATION("create-new-notification"),
-    SHOW_ALL_NOTIFICATIONS("show-all-notifications"),
-    EDIT_NOTIFICATION("edit-notification"),
-    EDIT_NOTIFICATION_TIME("edit-notification-time"),
-    EDIT_NOTIFICATION_TEXT("edit-notification-text"),
-    DELETE_NOTIFICATION("delete-notification"),
-    BACK_TO_MAIN_MENU("back-to-main-menu"),
-    BACK_TO_NOTIFICATION_MENU("back-to-notification-menu"),
-    REPEAT_NOTIFICATION_AFTER("repeat-notification-after");
+    CREATE_NEW_NOTIFICATION("notification:create-new"),
+    SHOW_ALL_NOTIFICATIONS("notification:show-all"),
+    EDIT_NOTIFICATION("notification:edit"),
+    EDIT_NOTIFICATION_TIME("notification:edit-time"),
+    EDIT_NOTIFICATION_TEXT("notification:edit-text"),
+    DELETE_NOTIFICATION("notification:delete"),
+    BACK_TO_MAIN_MENU("notification:back-to-main-menu"),
+    BACK_TO_NOTIFICATION_MENU("notification:back-to-menu"),
+    REPEAT_NOTIFICATION_AFTER("notification:repeat-after");
 
     private final String value;
 

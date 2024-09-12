@@ -9,11 +9,10 @@ public class MessageUtils {
     public SendMessage generateAnswerMessage(Update update, String text) {
         long chat_id = update.getMessage().getChatId();
 
-        SendMessage message = SendMessage // Create a message object
+        return SendMessage // Create a message object
                 .builder()
                 .chatId(chat_id)
                 .text(text)
                 .build();
-        return message;
     }
 }

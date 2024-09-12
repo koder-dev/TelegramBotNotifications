@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Component
 public class NotificationCleanupJob implements Job {
-    private AppNotificationsRepo appNotificationsRepo;
+    private final AppNotificationsRepo appNotificationsRepo;
 
     public NotificationCleanupJob(AppNotificationsRepo appNotificationsRepo) {
         this.appNotificationsRepo = appNotificationsRepo;

@@ -1,6 +1,8 @@
 package bursa.service.impl;
 
 import bursa.entities.*;
+import bursa.exceptions.IncorrectMediaClassException;
+import bursa.exceptions.NotAllowedToSendContentException;
 import bursa.exceptions.UploadFileException;
 import bursa.repositories.*;
 import bursa.service.*;
@@ -9,14 +11,17 @@ import bursa.service.enums.TelegramCommands;
 import lombok.extern.log4j.Log4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import java.util.Objects;
+
 import static bursa.enums.UserState.*;
 import static bursa.model.RabbitQueue.*;
+import static bursa.service.enums.LinkType.*;
 import static bursa.service.enums.TelegramCommands.*;
-import static bursa.service.strings.NodeModuleStringConstants.CANCEL_COMMAND_TEXT;
-import static bursa.service.strings.NodeModuleStringConstants.UNKNOWN_USER_STATE_ERROR_TEXT;
+import static bursa.service.strings.NodeModuleStringConstants.*;
 
 @Service
 @Log4j
@@ -45,20 +50,14 @@ public class MainServiceImpl implements MainService {
 
     @Override
     public void processTextMessage(Update update) {
-        var telegramCommand = TelegramCommands.fromValue(update.getMessage().getText());
+        var telegramCommand = fromValue(update.getMessage().getText());
         var user = findOrSaveAppUser(update);
 
         if (CANCEL.equals(telegramCommand)) {
-            sendAnswer(cancelProcess(user), update.getMessage().getChatId());
+            sendAnswer(commandHandlerService.cancelProcess(user, update.getMessage().getChatId()));
         } else {
             handleUserState(update, user, telegramCommand);
         }
-    }
-
-    private String cancelProcess(AppUser appUser) {
-        appUser.setUserState(BASIC_STATE);
-        appUserRepo.save(appUser);
-        return CANCEL_COMMAND_TEXT;
     }
 
     private void handleUserState(Update update, AppUser user, TelegramCommands telegramCommand) {
@@ -74,17 +73,9 @@ public class MainServiceImpl implements MainService {
         else sendAnswer(UNKNOWN_USER_STATE_ERROR_TEXT, chatId);
     }
 
-    private void sendAnswer(SendMessage message) {
-        producerService.producerAnswer(message);
-    }
-
-    private void sendAnswer(String text, Long charId) {
-        var sendMessage = SendMessage.builder().text(text).chatId(charId).build();
-        producerService.producerAnswer(sendMessage);
-    }
 
     private AppUser findOrSaveAppUser(Update update) {
-        User telegramUser = update.getMessage().getFrom();
+        User telegramUser = update.hasCallbackQuery() ? update.getCallbackQuery().getFrom() : update.getMessage().getFrom();
         return appUserRepo.findByTelegramUserId(telegramUser.getId()).orElseGet(() -> {
             AppUser appUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())
@@ -99,103 +90,84 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
-    public void processAudioMessage(Update update) {
+    public void processCallbackQueryMessage(Update update) {
+        var user = findOrSaveAppUser(update);
+        sendEditMarkupAnswer(commandHandlerService.processCallbackQuery(user, update));
+    }
+
+
+    private AppMedia processMediaMessage(Update update, LinkType linkType) {
         var appUser = findOrSaveAppUser(update);
         var chatId = update.getMessage().getChatId();
-        if (isNotAllowedToSendContent(chatId, appUser)) {
-            return;
-        }
-
+        String answer = null;
         try {
-            AppAudio audio = fileService.processAudio(update.getMessage(), appUser);
-            String link = fileService.generateLink(audio.getId(), LinkType.GET_AUDIO);
-            audio.setDownloadLink(link);
-            appAudioRepo.save(audio);
-            var answer = "Audio has uploaded.Link for downloading - " + link;
-            sendAnswer(answer, chatId);
-        } catch (UploadFileException ex) {
+            if (!appUser.getIsActive()) {
+                throw new NotAllowedToSendContentException(NOT_REGISTERED_ACCOUNT_TEXT);
+            }
+
+            AppMedia media;
+            if (linkType.equals(GET_PHOTO)) media = fileService.processPhoto(update.getMessage(), appUser);
+            else if (linkType.equals(GET_VIDEO)) media = fileService.processVideo(update.getMessage(), appUser);
+            else if (linkType.equals(GET_AUDIO)) media = fileService.processAudio(update.getMessage(), appUser);
+            else if (linkType.equals(GET_DOC)) media = fileService.processDoc(update.getMessage(), appUser);
+            else throw new IncorrectMediaClassException(INCORRECT_MEDIA_CLASS_TEXT);
+            String link = fileService.generateLink(media.getId(), GET_PHOTO);
+            media.setDownloadLink(link);
+            answer = MEDIAL_HAS_UPLOADED_TEXT + link;
+            return media;
+        } catch (UploadFileException | IncorrectMediaClassException | NotAllowedToSendContentException ex) {
             log.error(ex);
-            String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
-            sendAnswer(error, chatId);
+            answer = ex.getMessage();
+        } finally {
+            if (Objects.isNull(answer)) answer = UNKNOWN_USER_STATE_ERROR_TEXT;
+            sendAnswer(answer, chatId);
+        }
+        return null;
+    }
+
+    @Override
+    public void processAudioMessage(Update update) {
+        AppMedia audio = processMediaMessage(update, GET_AUDIO);
+        if (Objects.nonNull(audio)) {
+            appAudioRepo.save((AppAudio) audio);
         }
     }
 
     @Override
     public void processPhotoMessage(Update update) {
-        var appUser = findOrSaveAppUser(update);
-        var chatId = update.getMessage().getChatId();
-        if (isNotAllowedToSendContent(chatId, appUser)) {
-            return;
-        }
-
-        try {
-            AppPhoto photo = fileService.processPhoto(update.getMessage(), appUser);
-            String link = fileService.generateLink(photo.getId(), LinkType.GET_PHOTO);
-            photo.setDownloadLink(link);
-            appPhotoRepo.save(photo);
-            var answer = "Photo has uploaded.Link for downloading - " + link;
-            sendAnswer(answer, chatId);
-        } catch (UploadFileException ex) {
-            log.error(ex);
-            String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
-            sendAnswer(error, chatId);
+        AppMedia photo = processMediaMessage(update, GET_PHOTO);
+        if (Objects.nonNull(photo)) {
+            appPhotoRepo.save((AppPhoto) photo);
         }
     }
 
     @Override
     public void processDocMessage(Update update) {
-        var appUser = findOrSaveAppUser(update);
-        var chatId = update.getMessage().getChatId();
-        if (isNotAllowedToSendContent(chatId, appUser)) {
-            return;
-        }
-        try {
-            AppDocument appDocument = fileService.processDoc(update.getMessage());
-            String link = fileService.generateLink(appDocument.getId(), LinkType.GET_DOC);
-            appDocument.setDownloadLink(link);
-            appDocumentRepo.save(appDocument);
-            var answer = "Document has uploaded.Link for downloading - " + link;
-            sendAnswer(answer, chatId);
-        } catch (UploadFileException ex) {
-            log.error(ex);
-            String error = "Вибачте сатлася помилка при заванатажені документа спробуйте пізінше";
-            sendAnswer(error, chatId);
+        AppMedia doc = processMediaMessage(update, GET_DOC);
+        if (Objects.nonNull(doc)) {
+            appDocumentRepo.save((AppDocument) doc);
         }
     }
 
     @Override
     public void processVideoMessage(Update update) {
-        var appUser = findOrSaveAppUser(update);
-        var chatId = update.getMessage().getChatId();
-        if (isNotAllowedToSendContent(chatId, appUser)) {
-            return;
-        }
-
-        try {
-            AppVideo appVideo = fileService.processVideo(update.getMessage(), appUser);
-            String link = fileService.generateLink(appVideo.getId(), LinkType.GET_VIDEO);
-            appVideo.setDownloadLink(link);
-            appVideoRepo.save(appVideo);
-            var answer = "Video has uploaded.Link for downloading - " + link;
-            sendAnswer(answer, chatId);
-        } catch (UploadFileException ex) {
-            log.error(ex);
-            sendAnswer(ex.getMessage(), chatId);
+        AppMedia video = processMediaMessage(update, GET_VIDEO);
+        if (Objects.nonNull(video)) {
+            appVideoRepo.save((AppVideo) video);
         }
     }
 
-    private boolean isNotAllowedToSendContent(Long chatId, AppUser appUser) {
-        var userState = appUser.getUserState();
-        if (!appUser.getIsActive()) {
-            var error = "Зареєструйтеся або активуйте аккаунт";
-            sendAnswer(error, chatId);
-            return true;
-        } else if (!BASIC_STATE.equals(userState)) {
-            var error = "Відмініть команду за допомогою /cancel";
-            sendAnswer(error, chatId);
-            return true;
-        }
-        return false;
+    private void sendAnswer(SendMessage message) {
+        producerService.producerAnswer(message);
+    }
+
+    private void sendAnswer(String text, Long charId) {
+        var sendMessage = SendMessage.builder().text(text).chatId(charId).build();
+        producerService.producerAnswer(sendMessage);
+    }
+
+    private void sendEditMarkupAnswer(EditMessageReplyMarkup editMessageReplyMarkup) {
+        producerService.producerEditMarkupAnswer(editMessageReplyMarkup);
     }
 
 

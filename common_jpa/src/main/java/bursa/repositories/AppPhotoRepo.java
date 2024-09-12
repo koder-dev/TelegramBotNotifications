@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface AppPhotoRepo extends JpaRepository<AppPhoto, Long> {
     List<AppPhoto> findByAppUserId(long userId, Pageable pageable);
+    Long countByAppUserId(Long userId);
 }

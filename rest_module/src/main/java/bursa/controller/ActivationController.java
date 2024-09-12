@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/user")
 public class ActivationController {
-    private UserActivationService userActivationService;
+    private final UserActivationService userActivationService;
 
     public ActivationController(UserActivationService userActivationService) {
         this.userActivationService = userActivationService;

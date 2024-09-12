@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface AppVideoRepo extends JpaRepository<AppVideo, Long> {
     List<AppVideo> findByAppUserId(long userId, Pageable pageable);
+    Long countByAppUserId(Long userId);
 }

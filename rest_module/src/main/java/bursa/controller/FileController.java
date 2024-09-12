@@ -1,5 +1,7 @@
 package bursa.controller;
 
+import bursa.entities.AppMedia;
+import bursa.entities.AppPhoto;
 import bursa.service.FileService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j;
@@ -25,52 +27,29 @@ public class FileController {
     @GetMapping("/get-doc")
     public void getDoc(@RequestParam("id") String id, HttpServletResponse response) {
         var doc = fileService.getDocument(id);
-        if (Objects.isNull(doc)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        response.setContentType(MediaType.parseMediaType(doc.getMimeType()).toString());
-        response.setHeader("Content-Disposition", "attachment; filename=" + doc.getDocName());
-        response.setStatus(HttpServletResponse.SC_OK);
-        var binaryContent = doc.getBinaryContent();
-
-        try (var out = response.getOutputStream()){
-            out.write(binaryContent.getFileAsArrayOfBytes());
-        } catch (IOException e) {
-            log.error(e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+        getMedia(response, doc);
     }
 
     @GetMapping("/get-video")
     public void getVideo(@RequestParam("id") String id, HttpServletResponse response) {
         var video = fileService.getVideo(id);
-        if (Objects.isNull(video)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        response.setContentType(MediaType.parseMediaType(video.getMimeType()).toString());
-        response.setHeader("Content-Disposition", "attachment;");
-        var binaryContent = video.getBinaryContent();
-        response.setStatus(HttpServletResponse.SC_OK);
-        try (var out = response.getOutputStream()){
-            out.write(binaryContent.getFileAsArrayOfBytes());
-        } catch (IOException e) {
-            log.error(e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+        getMedia(response, video);
     }
 
     @GetMapping("/get-photo")
     public void getPhoto(@RequestParam("id") String id, HttpServletResponse response) {
-        var photo = fileService.getPhoto(id);
-        if (Objects.isNull(photo)) {
+        AppPhoto photo = fileService.getPhoto(id);
+        getMedia(response, photo);
+    }
+
+    private void getMedia(HttpServletResponse response, AppMedia media) {
+        if (Objects.isNull(media)) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        response.setContentType(MediaType.IMAGE_JPEG.toString());
+        response.setContentType(MediaType.parseMediaType(media.getMimeType()).toString());
         response.setHeader("Content-Disposition", "attachment;");
-        var binaryContent = photo.getBinaryContent();
+        var binaryContent = media.getBinaryContent();
         response.setStatus(HttpServletResponse.SC_OK);
         try (var out = response.getOutputStream()){
             out.write(binaryContent.getFileAsArrayOfBytes());
@@ -82,18 +61,6 @@ public class FileController {
     @GetMapping("/get-audio")
     public void getAudio(@RequestParam("id") String id, HttpServletResponse response) {
         var audio = fileService.getAudio(id);
-        if (Objects.isNull(audio)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        response.setContentType(MediaType.parseMediaType(audio.getMimeType()).toString());
-        response.setHeader("Content-Disposition", "attachment;");
-        var binaryContent = audio.getBinaryContent();
-        response.setStatus(HttpServletResponse.SC_OK);
-        try (var out = response.getOutputStream()){
-            out.write(binaryContent.getFileAsArrayOfBytes());
-        } catch (IOException e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+        getMedia(response, audio);
     }
 }

@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface AppAudioRepo extends JpaRepository<AppAudio, Long> {
     List<AppAudio> findByAppUserId(long userId, Pageable pageable);
+    Long countByAppUserId(Long userId);
 }
