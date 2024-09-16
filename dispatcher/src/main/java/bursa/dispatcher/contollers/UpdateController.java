@@ -2,7 +2,7 @@ package bursa.dispatcher.contollers;
 
 import bursa.dispatcher.service.UpdateProducer;
 import bursa.dispatcher.utils.MessageUtils;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,8 +16,8 @@ import static bursa.dispatcher.strings.StringConstants.*;
 import static bursa.model.RabbitQueue.*;
 import java.util.Objects;
 
+@Log4j2
 @Component
-@Log4j
 public class UpdateController {
     private TelegramBot telegramBot;
     private final MessageUtils messageUtils;
@@ -36,7 +36,7 @@ public class UpdateController {
         if (Objects.isNull(update)) log.debug(UPDATE_NULL_ERROR_TEXT);
         else if (update.hasMessage()) distributeMessageByType(update);
         else if (update.hasCallbackQuery()) processCallbackQuery(update);
-        else log.error(UNSUPPORTED_UPDATE_TYPE_TEXT + update);
+        else log.error(UNSUPPORTED_UPDATE_TYPE_TEXT + "{}", update);
     }
 
     public void distributeMessageByType(Update update) {

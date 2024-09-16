@@ -1,0 +1,214 @@
+version: '3.9'
+
+volumes:
+  rabbitmq-data:
+    driver: local
+  mysql_data:
+    driver: local
+
+services:
+  dispatcher:
+    container_name: dispatcher
+    restart: on-failure
+    build:
+      context: ./
+      dockerfile: ./dispatcher/Dockerfile
+    ports:
+    - ${DISPATCHER_PORT}:${DISPATCHER_PORT}
+    environment:
+      DISPATCHER_PORT: ${DISPATCHER_PORT}
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+      RABBIT_HOST: ${RABBIT_HOST}
+      RABBIT_PORT: ${RABBIT_PORT}
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '3'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
+  node:
+    container_name: node
+    restart: on-failure
+    build:
+      context: ./
+      dockerfile: ./node/Dockerfile
+    environment:
+      NODE_PORT: ${NODE_PORT}
+      RABBIT_HOST: ${RABBIT_HOST}
+      RABBIT_PORT: ${RABBIT_PORT}
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+      TG_BOT_FILE_INFO_URI: ${TG_BOT_FILE_INFO_URI}
+      TG_BOT_FILE_STORAGE_URI: ${TG_BOT_FILE_STORAGE_URI}
+      SALT: ${SALT}
+      LINK_ADDRESS: ${LINK_ADDRESS}
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '3'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+      mysql-db:
+        condition: service_healthy
+
+  rest_module:
+    container_name: rest_module
+    restart: on-failure
+    build:
+      context: ./
+      dockerfile: ./rest_module/Dockerfile
+    ports:
+      - ${REST_SERVICE_PORT}:${REST_SERVICE_PORT}
+    environment:
+      REST_SERVICE_PORT: ${REST_SERVICE_PORT}
+      SALT: ${SALT}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '3'
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+  mail_service:
+    container_name: mail_service
+    restart: on-failure
+    build:
+      context: ./
+      dockerfile: ./mail_service/Dockerfile
+    ports:
+      - ${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}
+    environment:
+      MAIL_SERVICE_PORT: ${MAIL_SERVICE_PORT}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_AUTH_PROPERTY: ${MAIL_AUTH_PROPERTY}
+      MAIL_START_TLS_ENABLE: ${MAIL_START_TLS_ENABLE}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+      RABBIT_HOST: ${RABBIT_HOST}
+      RABBIT_PORT: ${RABBIT_PORT}
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      ACTIVATION_URI: ${ACTIVATION_URI}
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '3'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
+  notification_service:
+    container_name: notification_service
+    restart: on-failure
+    build:
+      context: ./
+      dockerfile: ./notifications_service/Dockerfile
+    environment:
+      RABBIT_HOST: ${RABBIT_HOST}
+      RABBIT_PORT: ${RABBIT_PORT}
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
+      QUARTZ_DRIVER_DELEGATE: ${QUARTZ_DRIVER_DELEGATE}
+      QUARTZ_INIT_SCHEME: ${QUARTZ_INIT_SCHEME}
+      QUARTZ_STORE_TYPE: ${QUARTZ_STORE_TYPE}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '3'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+      dispatcher:
+        condition: service_started
+      node:
+        condition: service_started
+
+  rabbit-mq:
+    container_name: rabbit-mq
+    hostname: rabbitmq
+    image: rabbitmq:3.12.12-management-alpine
+    ports:
+      - ${RABBIT_AMQP_PORT_MAPPING}
+      - ${RABBIT_GUI_PORT_MAPPING}
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "--silent", "--quiet", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-db:
+    container_name: mysql-db
+    image: mysql/mysql-server:latest
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - ${DB_PORT_MAPPING}
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      DB_URL: ${DB_URL}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_SHOW_SQL: ${DB_SHOW_SQL}
+      DB_DIALECT: ${DB_DIALECT}
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+

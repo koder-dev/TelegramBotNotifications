@@ -61,7 +61,7 @@ public class FileServiceImpl implements FileService {
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persitentBinaryContent = getPersistentBinaryContent(response);
-            AppVideo transientAppVideo = (AppVideo) buildMedia(telegramVideo.getFileId(), telegramVideo.getFileId(), telegramVideo.getMimeType(), persitentBinaryContent, user, AppVideo.class);
+            AppVideo transientAppVideo = (AppVideo) buildMedia(telegramVideo.getFileId(), telegramVideo.getFileName(), telegramVideo.getMimeType(), persitentBinaryContent, user, AppVideo.class);
             return appVideoRepo.save(transientAppVideo);
         } else {
             throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT);
@@ -75,7 +75,8 @@ public class FileServiceImpl implements FileService {
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
             BinaryContent persitentBinaryContent = getPersistentBinaryContent(response);
-            AppPhoto transientAppPhoto = (AppPhoto) buildMedia(photoSize.getFileId(), photoSize.getFileId(), MediaType.IMAGE_JPEG.toString(), persitentBinaryContent, user, AppPhoto.class);
+            String photoName = photoSize.getFileId().substring(0, 4) + ".jpg";
+            AppPhoto transientAppPhoto = (AppPhoto) buildMedia(photoSize.getFileId(), photoName , MediaType.IMAGE_JPEG.toString(), persitentBinaryContent, user, AppPhoto.class);
             return appPhotoRepo.save(transientAppPhoto);
         } else {
             throw new UploadFileException(UPLOAD_FILE_EXCEPTION_TEXT);

@@ -8,7 +8,7 @@ import bursa.repositories.*;
 import bursa.service.*;
 import bursa.service.enums.LinkType;
 import bursa.service.enums.TelegramCommands;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -23,8 +23,8 @@ import static bursa.service.enums.LinkType.*;
 import static bursa.service.enums.TelegramCommands.*;
 import static bursa.service.strings.NodeModuleStringConstants.*;
 
+@Log4j2
 @Service
-@Log4j
 public class MainServiceImpl implements MainService {
     private final ProducerService producerService;
     private final AppUserRepo appUserRepo;
@@ -101,7 +101,7 @@ public class MainServiceImpl implements MainService {
         var chatId = update.getMessage().getChatId();
         String answer = null;
         try {
-            if (!appUser.getIsActive()) {
+            if (Boolean.FALSE.equals(appUser.getIsActive())) {
                 throw new NotAllowedToSendContentException(NOT_REGISTERED_ACCOUNT_TEXT);
             }
 
@@ -111,7 +111,7 @@ public class MainServiceImpl implements MainService {
             else if (linkType.equals(GET_AUDIO)) media = fileService.processAudio(update.getMessage(), appUser);
             else if (linkType.equals(GET_DOC)) media = fileService.processDoc(update.getMessage(), appUser);
             else throw new IncorrectMediaClassException(INCORRECT_MEDIA_CLASS_TEXT);
-            String link = fileService.generateLink(media.getId(), GET_PHOTO);
+            String link = fileService.generateLink(media.getId(), linkType);
             media.setDownloadLink(link);
             answer = MEDIAL_HAS_UPLOADED_TEXT + link;
             return media;

@@ -9,4 +9,5 @@ public class StringConstants {
     public static final String UPDATE_NULL_ERROR_TEXT = "Немає обєкта оновлення";
     public static final String UNSUPPORTED_UPDATE_TYPE_TEXT = "Не підтримувальний тип оновлення";
     public static final String UNSUPPORTED_MESSAGE_TYPE_TEXT = "Не підтримувальний тип повідомлення";
+    public static final String DISC_COMMAND_TEXT = "Відкрити меню взаємодію з диском";
 }

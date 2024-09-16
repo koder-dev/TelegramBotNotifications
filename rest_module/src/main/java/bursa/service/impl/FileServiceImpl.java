@@ -10,11 +10,9 @@ import bursa.repositories.AppPhotoRepo;
 import bursa.repositories.AppVideoRepo;
 import bursa.service.FileService;
 import bursa.utils.CryptoTool;
-import lombok.extern.log4j.Log4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Log4j
 public class FileServiceImpl implements FileService {
     private final AppDocumentRepo appDocumentRepo;
     private final AppVideoRepo appVideoRepo;

@@ -2,7 +2,7 @@ package bursa.service.quartz;
 
 import bursa.entities.AppNotification;
 import bursa.service.QuartSchedulerService;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.quartz.*;
 import org.springframework.stereotype.Service;
 
@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
+@Log4j2
 @Service
-@Log4j
 public class QuartzSchedulerServiceImpl implements QuartSchedulerService {
 
     private final Scheduler scheduler;

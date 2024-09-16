@@ -2,18 +2,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>bursa</groupId>
-    <artifactId>TelegramBotNotifications</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.2</version>
+    <relativePath/>
   </parent>
   <artifactId>rest_module</artifactId>
-  <name>Archetype - rest_module</name>
-  <url>http://maven.apache.org</url>
+  <name>rest_module</name>
+  <version>1.0.0</version>
+
   <dependencies>
-                   <dependency>
+    <dependency>
       <groupId>bursa</groupId>
-      <artifactId>common_jpa</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <artifactId>common</artifactId>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -34,9 +36,27 @@
       <version>2.16.1</version>
     </dependency>
     <dependency>
-      <groupId>bursa</groupId>
-      <artifactId>common-utils</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.34</version>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${parent.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

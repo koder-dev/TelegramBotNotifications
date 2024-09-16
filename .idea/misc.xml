@@ -11,6 +11,12 @@
         <option value="$PROJECT_DIR$/dispatcher/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/common-utils/pom.xml" />
+        <option value="$PROJECT_DIR$/common_rabbit_mq/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />

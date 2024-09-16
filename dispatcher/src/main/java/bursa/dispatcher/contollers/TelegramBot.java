@@ -1,7 +1,7 @@
 package bursa.dispatcher.contollers;
 
 import jakarta.annotation.PostConstruct;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -25,9 +25,8 @@ import java.util.List;
 
 import static bursa.dispatcher.strings.StringConstants.*;
 
+@Log4j2
 @Component
-@Log4j
-@PropertySource("classpath:telegram.properties")
 public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {
     private TelegramClient telegramClient;
     @Value("${bot.token}")
@@ -51,6 +50,7 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
         commands.add(new BotCommand("/cancel", CANCEL_COMMAND_TEXT));
         commands.add(new BotCommand("/registration", REGISTRATION_COMMAND_TEXT));
         commands.add(new BotCommand("/notifications", NOTIFICATIONS_COMMAND_TEXT));
+        commands.add(new BotCommand("/disc", DISC_COMMAND_TEXT));
         try {
             telegramClient.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {

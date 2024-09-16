@@ -1,0 +1,11 @@
+spring.application.name=rest
+server.port=${REST_SERVICE_PORT}
+
+spring.jpa.hibernate.ddl-auto=create
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${MYSQL_USER}
+spring.datasource.password=${MYSQL_PASSWORD}
+spring.datasource.driver-class-name=${DB_DRIVER}
+spring.jpa.show-sql=${DB_SHOW_SQL}
+spring.jpa.database-platform=${DB_DIALECT}
+salt=${SALT}

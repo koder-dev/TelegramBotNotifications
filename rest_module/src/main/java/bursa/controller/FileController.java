@@ -4,7 +4,6 @@ import bursa.entities.AppMedia;
 import bursa.entities.AppPhoto;
 import bursa.service.FileService;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.log4j.Log4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +15,6 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/file")
-@Log4j
 public class FileController {
     private final FileService fileService;
 
@@ -48,7 +46,7 @@ public class FileController {
             return;
         }
         response.setContentType(MediaType.parseMediaType(media.getMimeType()).toString());
-        response.setHeader("Content-Disposition", "attachment;");
+        response.setHeader("Content-Disposition", "attachment; filename=" + media.getFileName());
         var binaryContent = media.getBinaryContent();
         response.setStatus(HttpServletResponse.SC_OK);
         try (var out = response.getOutputStream()){

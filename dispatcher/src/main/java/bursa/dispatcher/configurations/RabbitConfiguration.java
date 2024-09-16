@@ -95,6 +95,11 @@ public class RabbitConfiguration {
     }
 
     @Bean
+    public Queue registrationMailMessageQueue() {
+        return createQueueWithDLQ(REGISTRATION_MAIL_MESSAGE);
+    }
+
+    @Bean
     public Queue dicsCallbackQueryQueue() {
         return createQueueWithDLQ(DISC_CALLBACK_QUERY);
     }
@@ -111,6 +116,11 @@ public class RabbitConfiguration {
     @Bean
     public Queue textMessageDLQ() {
         return createDLQ(TEXT_MESSAGE_UPDATE);
+    }
+
+    @Bean
+    public Queue registrationMailMessageDLQ() {
+        return createDLQ(REGISTRATION_MAIL_MESSAGE);
     }
 
     @Bean
@@ -197,6 +207,11 @@ public class RabbitConfiguration {
     @Bean
     public Binding docMessageDLQBinding() {
         return createDLQBinding(DOC_MESSAGE_UPDATE);
+    }
+
+    @Bean
+    public Binding registrationMailMessageDLQBinding() {
+        return createDLQBinding(REGISTRATION_MAIL_MESSAGE);
     }
 
     @Bean

@@ -1,37 +1,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>bursa</groupId>
-  <artifactId>TelegramBotNotifications</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>Archetype - TelegramBotNotifications</name>
-  <url>http://maven.apache.org</url>
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.2</version>
-    <relativePath/> <!-- lookup parent from repository -->
-  </parent>
-  <dependencies>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-    </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <optional>true</optional>
-    </dependency>
-  </dependencies>
-  <modules>
-    <module>common_rabbit_mq</module>
-    <module>node</module>
-      <module>common_jpa</module>
-      <module>rest_module</module>
-      <module>common-utils</module>
-    <module>mail_service</module>
-      <module>notifications_service</module>
-  </modules>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>bursa</groupId>
+    <artifactId>TelegramBotNotifications</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Archetype - TelegramBotNotifications</name>
+    <url>http://maven.apache.org</url>
+    <modules>
+        <module>node</module>
+        <module>common</module>
+        <module>rest_module</module>
+        <module>mail_service</module>
+        <module>dispatcher</module>
+        <module>notifications_service</module>
+    </modules>
 </project>

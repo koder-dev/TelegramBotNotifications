@@ -7,6 +7,5 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public interface ProducerService {
     void producerAnswer(SendMessage sendMessage);
     void produce(String rabbitQueue, Update update);
-
     void producerEditMarkupAnswer(EditMessageReplyMarkup editMessageReplyMarkup);
 }
