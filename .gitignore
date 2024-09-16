@@ -4,6 +4,8 @@ target/
 !**/src/test/**/target/
 .env
 *.properties
+**/resources/application.properties
+
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
