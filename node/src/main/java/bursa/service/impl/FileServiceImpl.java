@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 
 import static bursa.service.strings.NodeModuleStringConstants.*;
 
@@ -119,7 +120,7 @@ public class FileServiceImpl implements FileService {
     }
 
     private static String getFilePath(ResponseEntity<String> response) {
-        JSONObject json = new JSONObject(response.getBody());
+        JSONObject json = new JSONObject(Objects.requireNonNull(response.getBody()));
         return String.valueOf(json.getJSONObject("result").getString("file_path"));
     }
 

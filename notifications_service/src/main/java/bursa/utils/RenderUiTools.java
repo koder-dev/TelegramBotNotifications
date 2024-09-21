@@ -1,18 +1,27 @@
 package bursa.utils;
 
 import bursa.entities.AppNotification;
+import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static bursa.service.enums.CallbackData.*;
 import static bursa.strings.TelegramTextResponses.*;
 
 public class RenderUiTools {
+    private RenderUiTools () {}
 
     public static InlineKeyboardMarkup renderBackMenu() {
+        var row = getInlineKeyboardBackButtons();
+        return InlineKeyboardMarkup.builder().keyboardRow(row).build();
+    }
+
+    private static @NotNull InlineKeyboardRow getInlineKeyboardBackButtons() {
         var row = new InlineKeyboardRow();
         var backToMainMenuBtn = InlineKeyboardButton.builder()
                 .text(BACK_TO_NOTIFICATION_LIST_TEXT)
@@ -24,7 +33,7 @@ public class RenderUiTools {
                 .build();
         row.add(backToMainMenuBtn);
         row.add(backToNotificationMenuBtn);
-        return InlineKeyboardMarkup.builder().keyboardRow(row).build();
+        return row;
     }
 
     public static InlineKeyboardMarkup renderRepeatNotificationButtons(Long id) {
@@ -47,14 +56,19 @@ public class RenderUiTools {
 
     public static InlineKeyboardMarkup renderNotificationList(List<AppNotification> notificationList) {
         var inlineKeyboard = InlineKeyboardMarkup.builder();
-        notificationList.stream().map((notification) -> {
+        notificationList.stream().map(notification -> {
             InlineKeyboardRow row = new InlineKeyboardRow();
-            var btnText = notification.getNotifyText() + " " + notification.getNotifyTime().toString();
+            var timeText = formatTime(notification.getNotifyTime());
+            var btnText = String.format(NOTIFICATION_IN_LIST_TEMPLATE_TEXT, notification.getNotifyText(), timeText);
             var btn = InlineKeyboardButton.builder().text(btnText).callbackData(EDIT_NOTIFICATION + "/" +notification.getId().toString()).build();
             row.add(btn);
             return row;
         }).forEach(inlineKeyboard::keyboardRow);
         return inlineKeyboard.build();
+    }
+
+    public static @NotNull String formatTime(LocalDateTime time) {
+        return time.format(DateTimeFormatter.ofPattern("HH:mm dd-MM-yy"));
     }
 
     public static InlineKeyboardMarkup renderEditNotificationMenu(String id) {
@@ -72,11 +86,10 @@ public class RenderUiTools {
                 .text(DELETE_BTN_TEXT)
                 .callbackData(DELETE_NOTIFICATION + "/" + id)
                 .build();
-        var backToListBtn = InlineKeyboardButton.builder().text(BACK_TO_NOTIFICATION_LIST_TEXT).callbackData(SHOW_ALL_NOTIFICATIONS.toString()).build();
+        var backBtnRow = getInlineKeyboardBackButtons();
         row.add(editTimeBtn);
         row.add(editTextBtn);
         row.add(deleteBtn);
-        row2.add(backToListBtn);
-        return InlineKeyboardMarkup.builder().keyboardRow(row).keyboardRow(row2).build();
+        return InlineKeyboardMarkup.builder().keyboardRow(row).keyboardRow(row2).keyboardRow(backBtnRow).build();
     }
 }

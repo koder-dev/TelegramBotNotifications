@@ -92,7 +92,7 @@ public class MainServiceImpl implements MainService {
     @Override
     public void processCallbackQueryMessage(Update update) {
         var user = findOrSaveAppUser(update);
-        sendEditMarkupAnswer(commandHandlerService.processCallbackQuery(user, update));
+        sendEditMarkupAnswer(commandHandlerService.processNavigationCallbackQuery(user, update));
     }
 
 

@@ -16,4 +16,4 @@ COPY ./dispatcher/pom.xml $HOME/dispatcher
 COPY ./dispatcher/src "$HOME"/dispatcher/src
 RUN mvn -f "$HOME"/dispatcher/pom.xml -s "$MVN_SETTINGS" clean package --debug
 
-CMD java -jar "$HOME"/dispatcher/target/dispatcher-0.0.1.jar
+CMD java -Duser.timezone="Europe/Kiev" -jar "$HOME"/dispatcher/target/dispatcher-0.0.1.jar

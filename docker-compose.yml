@@ -6,6 +6,10 @@ volumes:
   mysql_data:
     driver: local
 
+networks:
+  my_network:
+    driver: bridge
+
 services:
   dispatcher:
     container_name: dispatcher
@@ -37,6 +41,9 @@ services:
     depends_on:
       rabbit-mq:
         condition: service_healthy
+
+    networks:
+      - my_network
 
   node:
     container_name: node
@@ -71,6 +78,8 @@ services:
         condition: service_healthy
       mysql-db:
         condition: service_healthy
+    networks:
+      - my_network
 
   rest_module:
     container_name: rest_module
@@ -97,6 +106,8 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy
+    networks:
+      - my_network
 
   mail_service:
     container_name: mail_service
@@ -133,6 +144,8 @@ services:
     depends_on:
       rabbit-mq:
         condition: service_healthy
+    networks:
+      - my_network
 
   notification_service:
     container_name: notification_service
@@ -167,6 +180,8 @@ services:
         condition: service_started
       node:
         condition: service_started
+    networks:
+      - my_network
 
   rabbit-mq:
     container_name: rabbit-mq
@@ -187,6 +202,8 @@ services:
       retries: 6
       start_period: 30s
     restart: unless-stopped
+    networks:
+      - my_network
 
   mysql-db:
     container_name: mysql-db
@@ -212,4 +229,6 @@ services:
       retries: 3
       start_period: 60s
     restart: unless-stopped
+    networks:
+      - my_network
 

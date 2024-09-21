@@ -16,4 +16,6 @@ public class RabbitQueue {
     public static final String NOTIFICATION_EDIT_TIME_MESSAGE = "notification_edit_time_message";
     public static final String EDIT_MESSAGE_MARKUP_ANSWER = "edit_message_markup_answer";
     public static final String REGISTRATION_MAIL_MESSAGE = "registration_mail_message";
+
+    private RabbitQueue() {}
 }

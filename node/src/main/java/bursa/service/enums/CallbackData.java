@@ -1,8 +1,8 @@
 package bursa.service.enums;
 
 public enum CallbackData {
-    NEXT("disc:next"),
-    PREV("disc:prev");
+    NEXT("node:next"),
+    PREV("node:prev");
 
     private final String data;
 

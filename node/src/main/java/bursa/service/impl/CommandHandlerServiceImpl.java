@@ -19,12 +19,13 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import static bursa.enums.UserState.BASIC_STATE;
-import static bursa.service.enums.CallbackData.NEXT;
-import static bursa.service.enums.CallbackData.PREV;
+import static bursa.service.enums.CallbackData.*;
 import static bursa.service.enums.TelegramCommands.*;
 import static bursa.service.strings.NodeModuleStringConstants.*;
 
@@ -55,19 +56,25 @@ public class CommandHandlerServiceImpl implements CommandHandlerService {
             message.text(CHOOSE_COMMAND_TEXT);
             message.replyMarkup(startMarkup());
         } else if (HELP.equals(command)) {
-            message.text(HELP_COMMAND_TEXT);
+            message.text(HELP_MESSAGE_TEXT);
+        } else if (SETTINGS.equals(command)) {
+            var now = ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_TIME);
+            var registrationStatus = Boolean.TRUE.equals(appUser.getIsActive()) ? IS_REGISTERED_TRUE_TEXT : IS_REGISTERED_FALSE_TEXT;
+            var text = String.format(SETTINGS_MESSAGE_TEMPLATE_TEXT, ZoneId.systemDefault(), now, registrationStatus);
+            message.text(text);
         } else if (DISC.equals(command)) {
             appUser.setUserState(UserState.DISC_STATE);
             appUserRepo.save(appUser);
-            message.text(DISC_COMMAND_TEXT).replyMarkup(discMenuMarkup());
+            message.text(DISC_MESSAGE_TEXT).replyMarkup(discMenuMarkup());
         } else {
             message.text(UNKNOWN_COMMAND_TEXT);
         }
         return message.chatId(chatId).build();
     }
 
+
     @Override
-    public EditMessageReplyMarkup processCallbackQuery(AppUser user, Update update) {
+    public EditMessageReplyMarkup processNavigationCallbackQuery(AppUser user, Update update) {
         var callbackDataString = update.getCallbackQuery().getData();
         var chatId = update.getCallbackQuery().getMessage().getChatId();
         var messageId = update.getCallbackQuery().getMessage().getMessageId();
@@ -88,14 +95,14 @@ public class CommandHandlerServiceImpl implements CommandHandlerService {
 
     public ReplyKeyboardMarkup discMenuMarkup() {
         KeyboardRow row = new KeyboardRow();
-        row.add("/videos");
-        row.add("/photos");
+        row.add(VIDEOS_COMMAND_TEXT);
+        row.add(PHOTOS_COMMAND_TEXT);
         KeyboardRow row2 = new KeyboardRow();
-        row2.add("/audio");
-        row2.add("/docs");
+        row2.add(AUDIO_COMMAND_TEXT);
+        row2.add(DOCS_COMMAND_TEXT);
         KeyboardRow row3 = new KeyboardRow();
-        row3.add("/cancel");
-        row3.add("/back");
+        row3.add(CANCEL_MESSAGE_TEXT);
+        row3.add(BACK_COMMAND_TEXT);
         return ReplyKeyboardMarkup.builder().keyboardRow(row).keyboardRow(row2).keyboardRow(row3).build();
     }
 
@@ -113,7 +120,7 @@ public class CommandHandlerServiceImpl implements CommandHandlerService {
         } else if (BACK.equals(telegramCommand)) {
             user.setUserState(BASIC_STATE);
             appUserRepo.save(user);
-            message.messageEffectId("5104841245755180586").replyMarkup(startMarkup());
+            message.text(BACK_RESPONSE_TEXT).messageEffectId("5104841245755180586").replyMarkup(startMarkup());
         } else {
             message.text(UNKNOWN_COMMAND_TEXT);
         }
@@ -125,7 +132,7 @@ public class CommandHandlerServiceImpl implements CommandHandlerService {
         user.setUserState(BASIC_STATE);
         appUserRepo.save(user);
         var markup = startMarkup();
-        return SendMessage.builder().text(CANCEL_COMMAND_TEXT).replyMarkup(markup).chatId(chatId).build();
+        return SendMessage.builder().text(CANCEL_MESSAGE_TEXT).replyMarkup(markup).chatId(chatId).build();
     }
 
     private InlineKeyboardMarkup mediaMarkup(Long userId, Integer pageNumber, String mediaType) {
@@ -174,13 +181,14 @@ public class CommandHandlerServiceImpl implements CommandHandlerService {
 
     private ReplyKeyboardMarkup startMarkup() {
         KeyboardRow row = new KeyboardRow();
-        row.add("/start");
-        row.add("/registration");
         KeyboardRow row2 = new KeyboardRow();
-        row2.add("/notifications");
-        row2.add("/disc");
         KeyboardRow row3 = new KeyboardRow();
-        row3.add("/cancel");
+        row.add(START_COMMAND_TEXT);
+        row.add(REGISTRATION_COMMAND_TEXT);
+        row2.add(NOTIFICATION_COMMAND_TEXT);
+        row2.add(DISC_COMMAND_TEXT);
+        row3.add(SETTINGS_COMMAND_TEXT);
+        row3.add(CANCEL_COMMAND_TEXT);
         return ReplyKeyboardMarkup.builder().keyboardRow(row).keyboardRow(row2).keyboardRow(row3).build();
     }
 }

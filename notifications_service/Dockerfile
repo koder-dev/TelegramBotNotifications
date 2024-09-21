@@ -16,4 +16,4 @@ COPY ./notifications_service/pom.xml "$HOME"/notifications_service
 COPY ./notifications_service/src "$HOME"/notifications_service/src
 RUN mvn -f "$HOME"/notifications_service/pom.xml -s "$MVN_SETTINGS" clean package -DskipTests --debug
 
-CMD java -jar "$HOME"/notifications_service/target/notifications_service-1.0.0.jar
+CMD java -Duser.timezone="Europe/Kiev" -jar "$HOME"/notifications_service/target/notifications_service-1.0.0.jar

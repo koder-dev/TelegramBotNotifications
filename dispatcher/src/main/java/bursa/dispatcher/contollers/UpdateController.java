@@ -55,7 +55,7 @@ public class UpdateController {
 
     private void processCallbackQuery(Update update) {
         var callbackData = update.getCallbackQuery().getData();
-        if (callbackData.startsWith("disc:")) {
+        if (callbackData.startsWith("node:")) {
             updateProducer.produce(DISC_CALLBACK_QUERY, update);
         } else if (callbackData.startsWith("notification:")) {
             updateProducer.produce(CALLBACK_QUERY, update);
@@ -76,7 +76,7 @@ public class UpdateController {
         try {
             telegramBot.sendAnswerMessage(sendMessage);
         } catch (TelegramApiException e) {
-            throw new AmqpRejectAndDontRequeueException("Telegram API error: " + e.getMessage());
+            throw new AmqpRejectAndDontRequeueException(e.getMessage());
         }
     }
 
@@ -84,7 +84,7 @@ public class UpdateController {
         try {
             telegramBot.sendAnswerMessage(editMessageText);
         } catch (TelegramApiException e) {
-            throw new AmqpRejectAndDontRequeueException("Telegram API error: " + e.getMessage());
+            throw new AmqpRejectAndDontRequeueException(e.getMessage());
         }
     }
 
@@ -92,7 +92,7 @@ public class UpdateController {
         try {
             telegramBot.sendAnswerMessage(deleteMessage);
         } catch (TelegramApiException e) {
-            throw new AmqpRejectAndDontRequeueException("Telegram API error: " + e.getMessage());
+            throw new AmqpRejectAndDontRequeueException(e.getMessage());
         }
     }
 

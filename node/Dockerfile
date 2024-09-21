@@ -16,4 +16,4 @@ COPY ./node/pom.xml "$HOME"/node
 COPY ./node/src "$HOME"/node/src
 RUN mvn -f "$HOME"/node/pom.xml -s "$MVN_SETTINGS" clean package -DskipTests --debug
 
-CMD java -jar "$HOME"/node/target/node-1.0.0.jar
+CMD java -Duser.timezone="Europe/Kiev" -jar "$HOME"/node/target/node-1.0.0.jar

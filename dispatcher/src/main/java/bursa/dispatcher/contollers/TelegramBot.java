@@ -3,7 +3,6 @@ package bursa.dispatcher.contollers;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
@@ -46,11 +45,12 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
 
     private void setCommands() {
         List<BotCommand> commands = new ArrayList<>();
-        commands.add(new BotCommand("/start", START_COMMAND_TEXT));
-        commands.add(new BotCommand("/cancel", CANCEL_COMMAND_TEXT));
-        commands.add(new BotCommand("/registration", REGISTRATION_COMMAND_TEXT));
-        commands.add(new BotCommand("/notifications", NOTIFICATIONS_COMMAND_TEXT));
-        commands.add(new BotCommand("/disc", DISC_COMMAND_TEXT));
+        commands.add(new BotCommand(START_COMMAND, START_COMMAND_TEXT));
+        commands.add(new BotCommand(CANCEL_COMMAND, CANCEL_COMMAND_TEXT));
+        commands.add(new BotCommand(REGISTRATION_COMMAND, REGISTRATION_COMMAND_TEXT));
+        commands.add(new BotCommand(NOTIFICATIONS_COMMAND, NOTIFICATIONS_COMMAND_TEXT));
+        commands.add(new BotCommand(DISC_COMMAND, DISC_COMMAND_TEXT));
+        commands.add(new BotCommand(HELP_COMMAND, HELP_COMMAND_TEXT));
         try {
             telegramClient.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {

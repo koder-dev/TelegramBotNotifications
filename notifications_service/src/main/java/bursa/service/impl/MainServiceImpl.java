@@ -22,6 +22,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
 import static bursa.enums.UserState.*;
 import static bursa.service.enums.CallbackData.*;
 import static bursa.strings.TelegramTextResponses.*;
@@ -83,15 +85,15 @@ public class MainServiceImpl implements MainService {
         var messageId = update.getCallbackQuery().getMessage().getMessageId();
         var chatId = update.getCallbackQuery().getMessage().getChatId();
         deleteMessage(messageId, chatId);
-        appNotificationsRepo.findById(Long.valueOf(notificationId)).ifPresentOrElse((notification) -> {
-            var newNotifyTime = notification.getNotifyTime().plusMinutes(Long.parseLong(afterTime));
+        appNotificationsRepo.findById(Long.valueOf(notificationId)).ifPresentOrElse(notification -> {
+            var newNotifyTime = LocalDateTime.now().plusMinutes(Long.parseLong(afterTime));
             notification.setNotifyTime(newNotifyTime);
             appNotificationsRepo.save(notification);
-            SendMessage message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_DELAYED).chatId(chatId).build();
+            SendMessage message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_DELAYED + RenderUiTools.formatTime(newNotifyTime)).chatId(chatId).build();
             sendMessage(message);
             quartSchedulerService.scheduleNotification(newNotifyTime, chatId, notification);
         }, () -> {
-            var message = SendMessage.builder().text(NOTIFICATION_CANNOT_BE_DELAYED).chatId(chatId).build();
+            var message = SendMessage.builder().text(NOTIFICATION_IS_NOT_AVAILABLE_TEXT).chatId(chatId).build();
             sendMessage(message);
         });
     }
@@ -105,14 +107,20 @@ public class MainServiceImpl implements MainService {
             var transientNotification = AppNotification.builder().appUser(user).notifyTime(notifyTime).notifyText(info).build();
             var persistedNotification = appNotificationsRepo.save(transientNotification);
             InlineKeyboardMarkup replyMarkup = RenderUiTools.renderBackMenu();
-            message = SendMessage.builder().text(NOTIFICATION_SUCCESSFULLY_CREATED_TEXT).replyMarkup(replyMarkup).chatId(chatId).build();
+            message = SendMessage.builder()
+                    .text(String.format(NOTIFICATION_SUCCESSFULLY_CREATED_TEMPLATE_TEXT, info, RenderUiTools.formatTime(notifyTime)))
+                    .replyMarkup(replyMarkup)
+                    .chatId(chatId).build();
             appUserRepo.save(user);
             quartSchedulerService.scheduleNotification(notifyTime, chatId, persistedNotification);
         } catch (NotCorrectDateFormat ex) {
             message = SendMessage.builder().text(ex.getMessage()).chatId(chatId).build();
+        } catch (DateTimeException ex) {
+            message = SendMessage.builder().text(NOT_FOUND_DATE_TEXT).chatId(chatId).build();
         }
         sendMessage(message);
     }
+
 
     private void welcomeNotificationMessage(Long chatId) {
         var row = new InlineKeyboardRow();
@@ -170,6 +178,8 @@ public class MainServiceImpl implements MainService {
             sendMessage(message);
         } catch (NotCorrectDateFormat ex) {
             sendMessage(SendMessage.builder().text(ex.getMessage()).chatId(chatId).build());
+        } catch (DateTimeException ex) {
+            sendMessage(SendMessage.builder().text(NOT_FOUND_DATE_TEXT).chatId(chatId).build());
         }
     }
 
@@ -205,10 +215,14 @@ public class MainServiceImpl implements MainService {
     private void editNotificationMessageMenu(Update update, String id) {
         var messageId = update.getCallbackQuery().getMessage().getMessageId();
         var chatId = update.getCallbackQuery().getMessage().getChatId();
+        appNotificationsRepo.findById(Long.valueOf(id)).ifPresentOrElse(notification -> {
+            var timeText = RenderUiTools.formatTime(notification.getNotifyTime());
+            var text = String.format(EDIT_TEMPLATE_TEXT, notification.getNotifyText(), timeText);
+            var keyboard = RenderUiTools.renderEditNotificationMenu(id);
+            var message = SendMessage.builder().text(text).chatId(chatId).replyMarkup(keyboard).build();
+            sendMessage(message);
+                }, () -> sendMessage(SendMessage.builder().text(NOTIFICATION_IS_NOT_AVAILABLE_TEXT).chatId(chatId).build()));
         deleteMessage(messageId, chatId);
-        var keyboard = RenderUiTools.renderEditNotificationMenu(id);
-        var message = SendMessage.builder().text(CHOOSE_EDIT_TEXT).chatId(chatId).replyMarkup(keyboard).build();
-        sendMessage(message);
     }
 
     private void showAllNotificationMessage(Update update) {
@@ -245,10 +259,7 @@ public class MainServiceImpl implements MainService {
     }
 
     private AppUser findOrSaveAppUser(Update update) {
-        User telegramUser;
-        if (update.hasCallbackQuery()) telegramUser = update.getCallbackQuery().getFrom();
-        else if (update.hasMessage()) telegramUser = update.getMessage().getFrom();
-        else throw new RuntimeException(INTERNAL_SERVER_ERROR_TEXT);
+        User telegramUser = update.hasCallbackQuery() ? update.getCallbackQuery().getFrom() : update.getMessage().getFrom();
         return appUserRepo.findByTelegramUserId(telegramUser.getId()).orElseGet(() -> {
             AppUser appUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())

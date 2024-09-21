@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import static bursa.strings.TelegramTextResponses.NOT_FOUND_DATE_TEXT;
 
 public class DateTimeParser {
+    private DateTimeParser() {}
 
     private static final String TIME_PATTERN = "(\\d{1,2})[:.]?(\\d{2})?";
     private static final String DATE_PATTERN = "(\\d{1,2})[./](\\d{1,2})[./](\\d{4})?";
@@ -21,7 +22,7 @@ public class DateTimeParser {
     private static final String RELATIVE_DATE_PATTERN = "(завтра|післязавтра|сьогодні|ранку|вечора)?\\s?([ов])?\\s?(\\d{1,2}[:.]?\\d{2})\\s?(завтра|післязавтра|сьогодні|ранку|вечора)?";
 
 
-    public static LocalDateTime parse(String input) throws NotCorrectDateFormat {
+    public static LocalDateTime parse(String input) throws NotCorrectDateFormat, DateTimeException {
         LocalTime time = extractTime(input);
         LocalDate date = extractDate(input);
 

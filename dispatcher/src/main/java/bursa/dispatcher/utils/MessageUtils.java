@@ -7,11 +7,11 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @Component
 public class MessageUtils {
     public SendMessage generateAnswerMessage(Update update, String text) {
-        long chat_id = update.getMessage().getChatId();
+        long chatId = update.getMessage().getChatId();
 
         return SendMessage // Create a message object
                 .builder()
-                .chatId(chat_id)
+                .chatId(chatId)
                 .text(text)
                 .build();
     }

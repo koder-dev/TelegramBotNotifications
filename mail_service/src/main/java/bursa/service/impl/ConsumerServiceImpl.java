@@ -10,7 +10,7 @@ import static bursa.model.RabbitQueue.REGISTRATION_MAIL_MESSAGE;
 
 @Service
 public class ConsumerServiceImpl implements ConsumerService {
-    private MailSenderService mailSenderService;
+    private final MailSenderService mailSenderService;
 
     public ConsumerServiceImpl(MailSenderService mailSenderService) {
         this.mailSenderService = mailSenderService;

@@ -13,5 +13,5 @@ public interface CommandHandlerService {
 
     SendMessage cancelProcess(AppUser user, Long chatId);
 
-    EditMessageReplyMarkup processCallbackQuery(AppUser user, Update update);
+    EditMessageReplyMarkup processNavigationCallbackQuery(AppUser user, Update update);
 }

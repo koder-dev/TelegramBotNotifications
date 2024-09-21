@@ -16,4 +16,4 @@ COPY ./mail_service/pom.xml "$HOME"/mail_service
 COPY ./mail_service/src "$HOME"/mail_service/src
 RUN mvn -f "$HOME"/mail_service/pom.xml -s "$MVN_SETTINGS" clean package --debug
 
-CMD java -jar "$HOME"/mail_service/target/mail_service-1.0.0.jar
+CMD java -Duser.timezone="Europe/Kiev" -jar "$HOME"/mail_service/target/mail_service-1.0.0.jar

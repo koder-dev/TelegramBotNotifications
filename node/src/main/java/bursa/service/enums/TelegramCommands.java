@@ -1,18 +1,20 @@
 package bursa.service.enums;
 
+import static bursa.service.strings.NodeModuleStringConstants.*;
+
 public enum TelegramCommands {
-    HELP("/help"),
-    REGISTRATION("/registration"),
-    NOTIFICATIONS("/notifications"),
-    CANCEL("/cancel"),
-    START("/start"),
-    SEARCH("/search"),
-    BACK("/back"),
-    DISC("/disc"),
-    VIDEOS("/videos"),
-    PHOTOS("/photos"),
-    DOCS("/docs"),
-    AUDIO("/audio");
+    HELP(HELP_COMMAND_TEXT),
+    REGISTRATION(REGISTRATION_COMMAND_TEXT),
+    NOTIFICATIONS(NOTIFICATION_COMMAND_TEXT),
+    SETTINGS(SETTINGS_COMMAND_TEXT),
+    CANCEL(CANCEL_COMMAND_TEXT),
+    START(START_COMMAND_TEXT),
+    BACK(BACK_COMMAND_TEXT),
+    DISC(DISC_COMMAND_TEXT),
+    VIDEOS(VIDEOS_COMMAND_TEXT),
+    PHOTOS(PHOTOS_COMMAND_TEXT),
+    DOCS(DOCS_COMMAND_TEXT),
+    AUDIO(AUDIO_COMMAND_TEXT);
 
     private final String command;
 
