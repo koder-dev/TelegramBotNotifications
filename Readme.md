@@ -3,6 +3,8 @@
 
 HelperBot is a Telegram bot designed for managing user notifications and saving files to its database.
 
+#Link for Bot - https://t.me/notify_cation_bot
+
 ## Features
 
 - **User Registration**: Users can register using their email address.
@@ -47,7 +49,7 @@ HelperBot is a Telegram bot designed for managing user notifications and saving 
 4. **Docker Compose**: Run the following command to start the module containers:
 
    ```bash
-   docker-compose up -d
+   docker compose -f docker-compose.yml --env-file .env up --build --detach
    ```
 
 5. The bot should now be running and available via Telegram.
@@ -122,7 +124,7 @@ HelperBot — це Телеграм-бот, розроблений для кер
 4. **Docker Compose**: Виконайте команду, щоб запустити контейнери модулів:
 
    ```bash
-   docker-compose up -d
+   docker compose -f docker-compose.yml --env-file .env up --build --detach
    ```
 
 5. Бот тепер працює та доступний через Telegram.
